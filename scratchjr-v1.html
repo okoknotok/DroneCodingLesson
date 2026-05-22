@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚁 無人機指令營 — ScratchJr 風格</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --motion-blue: #5B9BD5;
+      --control-orange: #FF9F45;
+      --event-yellow: #FFD966;
+      --end-red: #EF6053;
+      --bg-dark: #1a1a2e;
+      --bg-panel: #16213e;
+      --text-light: #e8e8e8;
+    }
+    
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+    
+    /* ===== 頂部 bar ===== */
+    #top-bar {
+      height: 56px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      color: white;
+    }
+    #level-title { font-size: 20px; font-weight: 800; }
+    #hint-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 20px;
+      padding: 8px 16px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #hint-btn:hover { background: rgba(255,255,255,0.35); }
+    
+    /* ===== 主內容區 ===== */
+    #main-content {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      overflow: hidden;
+    }
+    
+    /* ===== 左邊：舞台區 ===== */
+    #stage-panel {
+      width: 55%;
+      background: #0d1b2a;
+      display: flex;
+      flex-direction: column;
+      border-right: 3px solid var(--motion-blue);
+    }
+    
+    #stage-header {
+      padding: 10px 15px;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #stage-header h3 {
+      color: var(--motion-blue);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #zoom-controls {
+      display: flex;
+      gap: 8px;
+    }
+    .zoom-btn {
+      width: 32px; height: 32px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .zoom-btn:hover { background: rgba(255,255,255,0.2); }
+    #zoom-label { color: #888; font-size: 12px; line-height: 32px; }
+    
+    #stage-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+    
+    #stage-wrapper {
+      background: #2a3f5f;
+      border-radius: 16px;
+      padding: 15px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease;
+    }
+    
+    /* 客厅背景 */
+    #game-stage {
+      width: 400px; height: 320px;
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: linear-gradient(180deg, 
+        #87CEEB 0%, 
+        #87CEEB 35%,
+        #8B7355 35%,
+        #8B7355 37%,
+        #DEB887 37%,
+        #DEB887 100%
+      );
+    }
+    
+    /* 牆壁裝飾 */
+    .wall-deco {
+      position: absolute;
+      background: #F5DEB3;
+      border: 4px solid #8B7355;
+      border-radius: 4px;
+    }
+    .wall-deco.frame1 {
+      width: 70px; height: 50px;
+      top: 6%; left: 8%;
+      background: linear-gradient(135deg, #FFB6C1 0%, #FFA07A 100%);
+    }
+    .wall-deco.frame2 {
+      width: 55px; height: 70px;
+      top: 4%; right: 12%;
+      background: linear-gradient(135deg, #98FB98 0%, #90EE90 100%);
+    }
+    .wall-deco.clock {
+      width: 45px; height: 45px;
+      top: 6%; left: 45%;
+      background: white;
+      border-radius: 50%;
+      border: 4px solid #654321;
+    }
+    .window {
+      position: absolute;
+      width: 100px; height: 75px;
+      top: 3%; right: 28%;
+      background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 100%);
+      border: 6px solid #654321;
+      border-radius: 4px;
+    }
+    .window::after {
+      content: '';
+      position: absolute;
+      width: 2px; height: 100%;
+      background: #654321;
+      left: 50%;
+    }
+    .window::before {
+      content: '';
+      position: absolute;
+      width: 100%; height: 2px;
+      background: #654321;
+      top: 50%;
+    }
+    
+    /* 家具障礙物 */
+    .furniture {
+      position: absolute;
+      border-radius: 6px;
+    }
+    .furniture.sofa {
+      width: 120px; height: 45px;
+      bottom: 37%; left: 3%;
+      background: linear-gradient(180deg, #CD853F 0%, #8B4513 100%);
+      border: 3px solid #654321;
+    }
+    .furniture.table {
+      width: 90px; height: 40px;
+      bottom: 37%; right: 8%;
+      background: linear-gradient(180deg, #DEB887 0%, #D2691E 100%);
+      border: 3px solid #8B4513;
+      border-radius: 8px;
+    }
+    .furniture.plant {
+      width: 35px; height: 55px;
+      bottom: 37%; left: 22%;
+      background: linear-gradient(180deg, #228B22 0%, #006400 100%);
+      border-radius: 50% 50% 10% 10%;
+    }
+    
+    /* 地板格仔 */
+    #floor-grid {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 63%;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+    }
+    .floor-tile { border: 1px solid rgba(139, 115, 85, 0.25); }
+    .floor-tile:nth-child(odd) { background: rgba(222, 184, 135, 0.45); }
+    .floor-tile:nth-child(even) { background: rgba(210, 180, 140, 0.45); }
+    
+    /* 終點 */
+    #goal-zone {
+      position: absolute;
+      width: 55px; height: 55px;
+      border: 4px dashed #43a047;
+      border-radius: 8px;
+      background: rgba(67, 160, 71, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      animation: goalPulse 1.5s infinite;
+    }
+    @keyframes goalPulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+    
+    /* ===== 無人機（重新設計）===== */
+    #drone {
+      position: absolute;
+      width: 45px; height: 45px;
+      z-index: 100;
+      transition: left 0.4s ease-out, bottom 0.4s ease-out;
+    }
+    
+    /* 無人機身體 */
+    .drone-body {
+      width: 36px; height: 22px;
+      background: linear-gradient(180deg, #546E7A 0%, #37474F 100%);
+      border-radius: 10px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    /* 四個螺旋槳臂 */
+    .drone-arm {
+      position: absolute;
+      background: #455A64;
+      border-radius: 3px;
+    }
+    .drone-arm.tl {
+      width: 18px; height: 4px;
+      top: 5px; left: -6px;
+      transform: rotate(-45deg);
+    }
+    .drone-arm.tr {
+      width: 18px; height: 4px;
+      top: 5px; right: -6px;
+      transform: rotate(45deg);
+    }
+    .drone-arm.bl {
+      width: 18px; height: 4px;
+      bottom: 5px; left: -6px;
+      transform: rotate(45deg);
+    }
+    .drone-arm.br {
+      width: 18px; height: 4px;
+      bottom: 5px; right: -6px;
+      transform: rotate(-45deg);
+    }
+    
+    /* 螺旋槳 */
+    .drone-propeller {
+      position: absolute;
+      width: 14px; height: 3px;
+      background: rgba(200, 230, 255, 0.7);
+      border-radius: 2px;
+    }
+    .drone-propeller.pl {
+      top: 3px; left: -10px;
+    }
+    .drone-propeller.pr {
+      top: 3px; right: -10px;
+    }
+    .drone-propeller.fl {
+      bottom: 3px; left: -10px;
+    }
+    .drone-propeller.fr {
+      bottom: 3px; right: -10px;
+    }
+    
+    /* LED 表情 */
+    #drone-expr {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    }
+    
+    /* 無人機陰影 */
+    .drone-shadow {
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px; height: 8px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 50%;
+      filter: blur(3px);
+    }
+    
+    #drone.flying {
+      animation: droneHover 0.6s infinite alternate ease-in-out;
+    }
+    @keyframes droneHover {
+      from { transform: translateY(0); }
+      to { transform: translateY(-6px); }
+    }
+    
+    #drone.takeoff-anim {
+      animation: takeoffAnim 0.6s ease-out;
+    }
+    @keyframes takeoffAnim {
+      0% { transform: scale(1) translateY(0); }
+      40% { transform: scale(1.15) translateY(-20px); }
+      100% { transform: scale(1) translateY(-5px); }
+    }
+    
+    #drone.land-anim {
+      animation: landAnim 0.6s ease-in;
+    }
+    @keyframes landAnim {
+      0% { transform: scale(1) translateY(-5px); }
+      40% { transform: scale(0.95) translateY(10px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+    
+    /* ===== 過關 Overlay ===== */
+    #win-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(6px);
+    }
+    #win-overlay.show { display: flex; }
+    #win-overlay h1 { font-size: 72px; margin-bottom: 10px; animation: bounceIn 0.5s ease-out; }
+    @keyframes bounceIn {
+      0% { transform: scale(0); }
+      60% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    #win-overlay p { color: #ccc; font-size: 22px; margin-bottom: 25px; }
+    #next-btn {
+      padding: 14px 36px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 30px;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    #next-btn:hover { transform: scale(1.06); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+    
+    /* 提示 */
+    #hint-popup {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(102, 126, 234, 0.95);
+      padding: 14px 24px;
+      border-radius: 14px;
+      color: white;
+      font-size: 15px;
+      display: none;
+      z-index: 150;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+      line-height: 1.5;
+    }
+    #hint-popup.show { display: block; }
+    #hint-popup::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 8px solid transparent;
+      border-bottom-color: rgba(102, 126, 234, 0.95);
+    }
+    
+    /* ===== 右邊：積木編程區 ===== */
+    #programming-panel {
+      flex: 1;
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    #prog-header {
+      padding: 12px 15px;
+      background: rgba(0,0,0,0.25);
+      border-bottom: 2px solid rgba(255,255,255,0.08);
+    }
+    #prog-header h3 {
+      color: #667eea;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    /* 積木麵板 */
+    #block-palette {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.15);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .palette-sep {
+      width: 100%;
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      margin: 4px 0;
+    }
+    
+    .block {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      transition: transform 0.12s, box-shadow 0.12s;
+      font-size: 24px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+      border: 2px solid transparent;
+    }
+    .block:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.35); }
+    .block:active { transform: scale(0.95); cursor: grabbing; }
+    
+    .block.motion { background: linear-gradient(135deg, #5B9BD5 0%, #4177B8 100%); }
+    .block.control { background: linear-gradient(135deg, #FF9F45 0%, #E8890C 100%); }
+    .block.end { background: linear-gradient(135deg, #EF6053 0%, #D84A3A 100%); }
+    
+    .block-label {
+      position: absolute;
+      bottom: 2px;
+      right: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+    }
+    
+    /* 工作區 */
+    #workspace-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+      overflow: hidden;
+    }
+    
+    #workspace-label {
+      color: #667eea;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    
+    #program-workspace {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 2px dashed rgba(102, 126, 234, 0.4);
+      border-radius: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 12px;
+      min-height: 120px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      flex-wrap: wrap;
+      align-content: flex-start;
+    }
+    #program-workspace.drag-over {
+      border-color: var(--motion-blue);
+      background: rgba(91, 155, 213, 0.12);
+    }
+    
+    .program-block {
+      min-width: 46px; height: 46px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      position: relative;
+      animation: blockIn 0.18s ease-out;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    }
+    @keyframes blockIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .program-block.motion { background: linear-gradient(135deg, #5B9BD5 0%, #4177B8 100%); }
+    .program-block.control { background: linear-gradient(135deg, #FF9F45 0%, #E8890C 100%); }
+    .program-block.end { background: linear-gradient(135deg, #EF6053 0%, #D84A3A 100%); }
+    
+    .program-block .del {
+      position: absolute;
+      top: -7px; right: -7px;
+      width: 18px; height: 18px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: white;
+      font-weight: 700;
+    }
+    .program-block:hover .del { display: flex; }
+    
+    /* 參數標記 */
+    .block-param {
+      position: absolute;
+      bottom: -5px;
+      right: -5px;
+      background: white;
+      border-radius: 12px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #333;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    /* 控制按鈕 */
+    #controls {
+      display: flex;
+      gap: 8px;
+    }
+    .ctrl-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .ctrl-btn:hover { transform: scale(1.03); }
+    .ctrl-btn:active { transform: scale(0.97); }
+    #green-btn {
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(76, 175, 80, 0.35);
+    }
+    #clear-btn {
+      background: rgba(255,255,255,0.08);
+      color: #aaa;
+    }
+    #reset-btn {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef9a9a;
+    }
+    
+    /* 狀態列 */
+    #status-bar {
+      padding: 8px 15px;
+      background: rgba(0,0,0,0.3);
+      color: #888;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    #status-bar.success { background: rgba(76, 175, 80, 0.18); color: #81c784; }
+    #status-bar.fail { background: rgba(239, 68, 68, 0.18); color: #ef9a9a; }
+    #status-bar.running { background: rgba(91, 155, 213, 0.18); color: #90caf9; }
+  </style>
+</head>
+<body>
+  <!-- 頂部 bar -->
+  <div id="top-bar">
+    <div id="level-title">🏠 第一關：客廳任務</div>
+    <button id="hint-btn" onclick="toggleHint()">💡 提示</button>
+  </div>
+  
+  <div id="main-content">
+    <!-- 左邊：舞台區 -->
+    <div id="stage-panel">
+      <div id="stage-header">
+        <h3>🎮 遊戲舞台 <span id="zoom-label">100%</span></h3>
+        <div id="zoom-controls">
+          <button class="zoom-btn" onclick="zoomIn()">＋</button>
+          <button class="zoom-btn" onclick="zoomOut()">－</button>
+          <button class="zoom-btn" onclick="resetZoom()">⟲</button>
+        </div>
+      </div>
+      
+      <div id="stage-container">
+        <div id="stage-wrapper">
+          <div id="game-stage">
+            <!-- 牆壁裝飾 -->
+            <div class="wall-deco frame1"></div>
+            <div class="wall-deco frame2"></div>
+            <div class="wall-deco clock"></div>
+            <div class="window"></div>
+            
+            <!-- 家具障礙物 -->
+            <div class="furniture sofa"></div>
+            <div class="furniture table"></div>
+            <div class="furniture plant"></div>
+            
+            <!-- 地板格仔 -->
+            <div id="floor-grid"></div>
+            
+            <!-- 終點 -->
+            <div id="goal-zone" style="bottom: 30%; left: 75%;">🏁</div>
+            
+            <!-- 無人機 -->
+            <div id="drone" style="bottom: 33%; left: 8%;">
+              <div id="drone-expr">😴</div>
+              <div class="drone-shadow"></div>
+              <div style="position:relative;">
+                <div class="drone-body"></div>
+                <div class="drone-arm tl"></div>
+                <div class="drone-arm tr"></div>
+                <div class="drone-arm bl"></div>
+                <div class="drone-arm br"></div>
+                <div class="drone-propeller pl"></div>
+                <div class="drone-propeller pr"></div>
+                <div class="drone-propeller fl"></div>
+                <div class="drone-propeller fr"></div>
+              </div>
+            </div>
+            
+            <!-- 過關 overlay -->
+            <div id="win-overlay">
+              <h1>🎉</h1>
+              <p id="win-msg">過關了！太棒了！</p>
+              <button id="next-btn" onclick="nextLevel()">下一關 →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 右邊：積木編程區 -->
+    <div id="programming-panel">
+      <div id="prog-header">
+        <h3>🧩 積木程式</h3>
+      </div>
+      
+      <!-- 積木麵板 -->
+      <div id="block-palette">
+        <div class="block motion" draggable="true" data-type="takeoff" title="起飛">🚀</div>
+        <div class="block motion" draggable="true" data-type="forward" title="前進">⬆️</div>
+        <div class="block motion" draggable="true" data-type="backward" title="後退">⬇️</div>
+        <div class="block motion" draggable="true" data-type="left" title="左轉">↩️</div>
+        <div class="block motion" draggable="true" data-type="right" title="右轉">↪️</div>
+        
+        <div class="palette-sep"></div>
+        
+        <div class="block control" draggable="true" data-type="repeat" title="重複">🔄</div>
+        <div class="block control" draggable="true" data-type="wait" title="等待">⏱️</div>
+        
+        <div class="palette-sep"></div>
+        
+        <div class="block end" draggable="true" data-type="land" title="着陸">🛬</div>
+      </div>
+      
+      <!-- 工作區 -->
+      <div id="workspace-section">
+        <div id="workspace-label">你的程式：</div>
+        <div id="program-workspace"></div>
+        <div id="controls">
+          <button class="ctrl-btn" id="green-btn" onclick="runProgram()">▶ 執行</button>
+          <button class="ctrl-btn" id="clear-btn" onclick="clearProgram()">🗑️ 清除</button>
+          <button class="ctrl-btn" id="reset-btn" onclick="resetDrone()">🔄 重置</button>
+        </div>
+      </div>
+      
+      <!-- 狀態列 -->
+      <div id="status-bar">
+        <span id="block-count">0 個積木</span>
+        <span>Level 1</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 提示 -->
+  <div id="hint-popup">🎯 目標：操控無人機到達 🏁 終點！<br><br>👉 試試：起飛 → 前進 → 前進 → 前進 → 着陸</div>
+
+  <script>
+    // === 遊戲狀態 ===
+    let program = [];
+    let isRunning = false;
+    let dronePos = { x: 8, y: 33 };
+    let droneFlying = false;
+    let zoomLevel = 100;
+    
+    // === 關卡數據 ===
+    const LEVELS = [
+      {
+        name: "第一關：客廳任務",
+        hint: "🎯 目標：操控無人機到達 🏁 終點！\n\n👉 試試：起飛 → 前進 → 前進 → 前進 → 着陸",
+        start: { x: 8, y: 33 },
+        goal: { x: 75, y: 30 },
+        obstacles: []
+      },
+      {
+        name: "第二關：繞過障礙",
+        hint: "⚠️ 前面有障礙物！需要轉向繞路",
+        start: { x: 8, y: 55 },
+        goal: { x: 80, y: 55 },
+        obstacles: [{ x: 45, y: 55, w: 10, h: 12 }]
+      },
+      {
+        name: "第三關：長距離挑戰",
+        hint: "🏁 終點比較遠，要用更多前進積木！",
+        start: { x: 5, y: 50 },
+        goal: { x: 88, y: 50 },
+        obstacles: []
+      }
+    ];
+    let currentLevel = 0;
+    
+    // === 縮放控制 ===
+    function zoomIn() {
+      zoomLevel = Math.min(150, zoomLevel + 15);
+      updateZoom();
+    }
+    function zoomOut() {
+      zoomLevel = Math.max(60, zoomLevel - 15);
+      updateZoom();
+    }
+    function resetZoom() {
+      zoomLevel = 100;
+      updateZoom();
+    }
+    function updateZoom() {
+      document.getElementById('stage-wrapper').style.transform = `scale(${zoomLevel / 100})`;
+      document.getElementById('zoom-label').textContent = `${zoomLevel}%`;
+    }
+    
+    // === 初始化地板格仔 ===
+    function initFloorGrid() {
+      const grid = document.getElementById('floor-grid');
+      for (let i = 0; i < 50; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'floor-tile';
+        grid.appendChild(tile);
+      }
+    }
+    
+    // === 積木拖放 ===
+    const palette = document.getElementById('block-palette');
+    const workspace = document.getElementById('program-workspace');
+    
+    palette.addEventListener('dragstart', e => {
+      if (e.target.classList.contains('block')) {
+        e.dataTransfer.setData('type', e.target.dataset.type);
+        e.dataTransfer.setData('icon', e.target.textContent);
+        e.dataTransfer.setData('class', e.target.className);
+      }
+    });
+    
+    workspace.addEventListener('dragover', e => {
+      e.preventDefault();
+      workspace.classList.add('drag-over');
+    });
+    workspace.addEventListener('dragleave', () => {
+      workspace.classList.remove('drag-over');
+    });
+    workspace.addEventListener('drop', e => {
+      e.preventDefault();
+      workspace.classList.remove('drag-over');
+      
+      const type = e.dataTransfer.getData('type');
+      const icon = e.dataTransfer.getData('icon');
+      const cls = e.dataTransfer.getData('class');
+      
+      if (type) addBlock(type, icon, cls);
+    });
+    
+    // === 添加積木 ===
+    function addBlock(type, icon, cls) {
+      const block = document.createElement('div');
+      block.className = `program-block ${cls.split(' ')[1]}`;
+      block.dataset.type = type;
+      block.innerHTML = icon;
+      
+      const del = document.createElement('span');
+      del.className = 'del';
+      del.innerHTML = '×';
+      del.onclick = (e) => {
+        e.stopPropagation();
+        block.remove();
+        updateBlockCount();
+      };
+      block.appendChild(del);
+      
+      if (type === 'repeat') {
+        const param = document.createElement('span');
+        param.className = 'block-param';
+        param.innerHTML = '×3';
+        param.onclick = (e) => {
+          e.stopPropagation();
+          let times = parseInt(param.innerHTML.replace('×', '')) || 1;
+          times = times >= 5 ? 1 : times + 1;
+          param.innerHTML = `×${times}`;
+        };
+        block.appendChild(param);
+      }
+      
+      block.onclick = () => {
+        if (!isRunning) executeSingleBlock(type);
+      };
+      
+      workspace.appendChild(block);
+      updateBlockCount();
+      playBlockSound();
+    }
+    
+    function updateBlockCount() {
+      const blocks = workspace.querySelectorAll('.program-block');
+      document.getElementById('block-count').textContent = `${blocks.length} 個積木`;
+    }
+    
+    // === 音效 ===
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playBlockSound() {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    }
+    
+    function playSuccessSound() {
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.25);
+        }, i * 120);
+      });
+    }
+    
+    function playFailSound() {
+      [350, 250].forEach((freq, i) => {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'square';
+          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.18);
+        }, i * 100);
+      });
+    }
+    
+    // === 執行 ===
+    function executeSingleBlock(type) {
+      const drone = document.getElementById('drone');
+      const expr = document.getElementById('drone-expr');
+      
+      switch(type) {
+        case 'takeoff':
+          droneFlying = true;
+          drone.classList.add('flying', 'takeoff-anim');
+          expr.textContent = '😀';
+          setTimeout(() => drone.classList.remove('takeoff-anim'), 600);
+          break;
+        case 'forward':
+          if (droneFlying) { dronePos.x += 10; expr.textContent = '😎'; }
+          break;
+        case 'backward':
+          if (droneFlying) { dronePos.x -= 10; expr.textContent = '😎'; }
+          break;
+        case 'left':
+          if (droneFlying) { dronePos.x -= 5; dronePos.y += 5; expr.textContent = '😉'; }
+          break;
+        case 'right':
+          if (droneFlying) { dronePos.x += 5; dronePos.y -= 5; expr.textContent = '😉'; }
+          break;
+        case 'land':
+          droneFlying = false;
+          drone.classList.remove('flying');
+          expr.textContent = '🥰';
+          break;
+      }
+      
+      updateDronePosition();
+      setTimeout(checkGoal, 350);
+    }
+    
+    function updateDronePosition() {
+      const drone = document.getElementById('drone');
+      drone.style.left = `${dronePos.x}%`;
+      drone.style.bottom = `${dronePos.y}%`;
+    }
+    
+    // === 執行整個程序 ===
+    async function runProgram() {
+      if (isRunning) return;
+      
+      const blocks = workspace.querySelectorAll('.program-block');
+      if (blocks.length === 0) return;
+      
+      isRunning = true;
+      document.getElementById('status-bar').className = 'running';
+      document.getElementById('status-bar').innerHTML = '<span>🔄 執行中...</span>';
+      droneFlying = false;
+      
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        const type = block.dataset.type;
+        
+        block.style.boxShadow = '0 0 0 3px white, 0 0 15px rgba(255,255,255,0.5)';
+        
+        await new Promise(resolve => {
+          executeSingleBlock(type);
+          setTimeout(resolve, 450);
+        });
+        
+        if (type === 'repeat') {
+          const param = block.querySelector('.block-param');
+          const times = parseInt(param?.innerHTML.replace('×', '')) || 1;
+          if (i > 0) {
+            const prevType = blocks[i-1].dataset.type;
+            for (let j = 0; j < times - 1; j++) {
+              await new Promise(r => setTimeout(r, 280));
+              executeSingleBlock(prevType);
+            }
+          }
+        }
+        
+        if (type === 'wait') {
+          await new Promise(r => setTimeout(r, 700));
+        }
+        
+        block.style.boxShadow = '';
+      }
+      
+      isRunning = false;
+      
+      if (checkGoalSimple()) {
+        showWin();
+      } else if (droneFlying) {
+        document.getElementById('status-bar').className = 'fail';
+        document.getElementById('status-bar').innerHTML = '<span>❌ 未到達終點，再試一次！</span>';
+        playFailSound();
+      }
+    }
+    
+    function checkGoal() {
+      if (checkGoalSimple()) showWin();
+    }
+    
+    function checkGoalSimple() {
+      const goal = LEVELS[currentLevel].goal;
+      return Math.abs(dronePos.x - goal.x) < 12 && Math.abs(dronePos.y - goal.y) < 12;
+    }
+    
+    function showWin() {
+      playSuccessSound();
+      document.getElementById('status-bar').className = 'success';
+      document.getElementById('status-bar').innerHTML = '<span>🎉 過關了！</span>';
+      document.getElementById('win-overlay').classList.add('show');
+      document.getElementById('win-msg').textContent = 
+        currentLevel < LEVELS.length - 1 ? '太棒了！準備好挑戰下一關？' : '恭喜完成所有關卡！🎊';
+      document.getElementById('next-btn').textContent = 
+        currentLevel < LEVELS.length - 1 ? '下一關 →' : '再玩一次';
+    }
+    
+    function nextLevel() {
+      document.getElementById('win-overlay').classList.remove('show');
+      if (currentLevel < LEVELS.length - 1) currentLevel++;
+      else currentLevel = 0;
+      loadLevel(currentLevel);
+    }
+    
+    function loadLevel(index) {
+      const level = LEVELS[index];
+      document.getElementById('level-title').textContent = level.name;
+      document.getElementById('hint-popup').innerHTML = level.hint.replace('\n', '<br>');
+      document.getElementById('status-bar').innerHTML = '<span id="block-count">0 個積木</span><span>Level ' + (index + 1) + '</span>';
+      
+      dronePos = { ...level.start };
+      droneFlying = false;
+      
+      const drone = document.getElementById('drone');
+      drone.classList.remove('flying');
+      document.getElementById('drone-expr').textContent = '😴';
+      updateDronePosition();
+      
+      document.getElementById('goal-zone').style.left = `${level.goal.x}%`;
+      document.getElementById('goal-zone').style.bottom = `${level.goal.y}%`;
+      
+      document.getElementById('status-bar').className = '';
+    }
+    
+    function clearProgram() {
+      workspace.innerHTML = '';
+      updateBlockCount();
+    }
+    
+    function resetDrone() {
+      const level = LEVELS[currentLevel];
+      dronePos = { ...level.start };
+      droneFlying = false;
+      
+      const drone = document.getElementById('drone');
+      drone.classList.remove('flying');
+      document.getElementById('drone-expr').textContent = '😴';
+      updateDronePosition();
+      
+      document.getElementById('status-bar').className = '';
+      document.getElementById('status-bar').innerHTML = '<span id="block-count">0 個積木</span><span>Level ' + (currentLevel + 1) + '</span>';
+    }
+    
+    function toggleHint() {
+      document.getElementById('hint-popup').classList.toggle('show');
+    }
+    
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#hint-btn') && !e.target.closest('#hint-popup')) {
+        document.getElementById('hint-popup').classList.remove('show');
+      }
+    });
+    
+    // === 初始化 ===
+    initFloorGrid();
+    loadLevel(0);
+    
+    document.body.addEventListener('click', () => {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }, { once: true });
+  </script>
+</body>
+</html>
