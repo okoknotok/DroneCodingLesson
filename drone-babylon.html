@@ -5,12 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🚁 無人機指令營 — 完整版</title>
   
-  <!-- Babylon.js -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
-  
-  <!-- Blockly -->
   <script src="https://unpkg.com/blockly@11.0.0/blockly.min.js"></script>
   
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -40,7 +37,6 @@
       user-select: none;
     }
     
-    /* ===== 頂部 bar ===== */
     #top-bar {
       height: 64px;
       background: linear-gradient(135deg, var(--accent) 0%, #764ba2 100%);
@@ -52,17 +48,10 @@
       box-shadow: 0 4px 25px rgba(0,0,0,0.4);
       z-index: 100;
     }
-    #logo-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    #logo-area { display: flex; align-items: center; gap: 12px; }
     #logo { font-size: 28px; }
     #level-title { font-size: 20px; font-weight: 800; }
-    #level-selector {
-      display: flex;
-      gap: 8px;
-    }
+    #level-selector { display: flex; gap: 8px; }
     .level-btn {
       width: 36px; height: 36px;
       background: rgba(255,255,255,0.15);
@@ -77,6 +66,7 @@
     .level-btn:hover { background: rgba(255,255,255,0.25); }
     .level-btn.active { border-color: white; background: rgba(255,255,255,0.3); }
     .level-btn.locked { opacity: 0.4; cursor: not-allowed; }
+    .level-btn.completed { background: var(--success); }
     #top-btns { display: flex; gap: 10px; }
     .top-btn {
       padding: 8px 18px;
@@ -93,15 +83,10 @@
       gap: 6px;
     }
     .top-btn:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+    .top-btn.solution { background: rgba(245, 166, 35, 0.3); }
     
-    /* ===== 主內容 ===== */
-    #main-content {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-    }
+    #main-content { flex: 1; display: flex; overflow: hidden; }
     
-    /* ===== 左邊：3D 舞台 ===== */
     #stage-panel {
       flex: 1;
       display: flex;
@@ -119,13 +104,7 @@
       align-items: center;
       border-bottom: 1px solid rgba(255,255,255,0.05);
     }
-    #stage-header h3 {
-      color: var(--motion-blue);
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    #stage-header h3 { color: var(--motion-blue); font-size: 14px; display: flex; align-items: center; gap: 8px; }
     #camera-controls { display: flex; gap: 6px; align-items: center; }
     .cam-btn {
       width: 32px; height: 32px;
@@ -145,14 +124,8 @@
       position: relative;
       overflow: hidden;
     }
-    #renderCanvas {
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-      display: block;
-    }
+    #renderCanvas { width: 100%; height: 100%; touch-action: none; display: block; }
     
-    /* 疊加 UI */
     #overlay-ui {
       position: absolute;
       top: 12px;
@@ -170,26 +143,13 @@
       border: 1px solid rgba(255,255,255,0.08);
       min-width: 140px;
     }
-    .info-card .lbl {
-      color: #666;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    .info-card .val {
-      color: white;
-      font-size: 18px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+    .info-card .lbl { color: #666; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .info-card .val { color: white; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
     .info-card.success { border-color: var(--success); }
     .info-card .val.success { color: var(--success); }
+    .info-card.warning { border-color: var(--control-orange); }
+    .info-card .val.warning { color: var(--control-orange); }
     
-    /* 終點標記 */
     #goal-hud {
       position: absolute;
       bottom: 16px;
@@ -212,7 +172,6 @@
       50% { transform: translateX(-50%) scale(1.03); }
     }
     
-    /* 過關彈窗 */
     #win-modal {
       position: absolute;
       inset: 0;
@@ -231,12 +190,7 @@
       60% { transform: scale(1.3) rotate(20deg); }
       100% { transform: scale(1) rotate(0); opacity: 1; }
     }
-    #win-modal h2 {
-      color: white;
-      font-size: 42px;
-      margin-bottom: 8px;
-      text-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
-    }
+    #win-modal h2 { color: white; font-size: 42px; margin-bottom: 8px; text-shadow: 0 4px 20px rgba(102, 126, 234, 0.5); }
     #win-modal p { color: #aaa; font-size: 20px; margin-bottom: 30px; }
     #win-buttons { display: flex; gap: 12px; }
     .win-btn {
@@ -248,18 +202,10 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    .win-btn.primary {
-      background: linear-gradient(135deg, var(--accent), #764ba2);
-      color: white;
-      box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
-    }
-    .win-btn.secondary {
-      background: rgba(255,255,255,0.1);
-      color: white;
-    }
+    .win-btn.primary { background: linear-gradient(135deg, var(--accent), #764ba2); color: white; box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5); }
+    .win-btn.secondary { background: rgba(255,255,255,0.1); color: white; }
     .win-btn:hover { transform: scale(1.05); }
     
-    /* 提示卡片 */
     #hint-card {
       position: absolute;
       bottom: 80px;
@@ -278,17 +224,8 @@
       line-height: 1.6;
     }
     #hint-card.show { display: block; }
-    #hint-card::after {
-      content: '';
-      position: absolute;
-      bottom: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 10px solid transparent;
-      border-top-color: rgba(102, 126, 234, 0.95);
-    }
+    #hint-card::after { content: ''; position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); border: 10px solid transparent; border-top-color: rgba(102, 126, 234, 0.95); }
     
-    /* ===== 右邊：Blockly 積木 ===== */
     #blockly-panel {
       width: 480px;
       min-width: 400px;
@@ -307,19 +244,9 @@
       align-items: center;
       border-bottom: 1px solid rgba(255,255,255,0.05);
     }
-    #blockly-header h3 {
-      color: var(--accent);
-      font-size: 16px;
-      font-weight: 700;
-    }
+    #blockly-header h3 { color: var(--accent); font-size: 16px; font-weight: 700; }
     #header-btns { display: flex; gap: 10px; align-items: center; }
-    #block-counter {
-      color: #666;
-      font-size: 13px;
-      padding: 6px 12px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 15px;
-    }
+    #block-counter { color: #666; font-size: 13px; padding: 6px 12px; background: rgba(255,255,255,0.05); border-radius: 15px; }
     #run-btn {
       padding: 10px 24px;
       background: linear-gradient(135deg, #50C878, #3cb371);
@@ -339,26 +266,9 @@
     #run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     #run-btn.running { background: linear-gradient(135deg, #F5A623, #e69500); }
     
-    /* Blockly 區域 */
-    #blockly-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    #blockly-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #blocklyDiv { flex: 1; height: 100%; overflow: auto; }
     
-    #blocklyDiv {
-      flex: 1;
-      height: 100%;
-      overflow: auto;
-    }
-    
-    /* Blockly 客製化 */
-    .blocklyToolboxCategory {
-      cursor: pointer;
-    }
-    
-    /* 狀態列 */
     #status-bar {
       height: 44px;
       padding: 0 16px;
@@ -372,18 +282,12 @@
     #block-count { color: #888; font-size: 13px; }
     #level-indicator { color: #666; font-size: 12px; }
     #status-right { display: flex; align-items: center; }
-    #status-badge {
-      padding: 5px 14px;
-      border-radius: 15px;
-      font-size: 12px;
-      font-weight: 700;
-    }
+    #status-badge { padding: 5px 14px; border-radius: 15px; font-size: 12px; font-weight: 700; }
     #status-badge.ready { background: rgba(74, 144, 217, 0.2); color: #4A90D9; }
     #status-badge.running { background: rgba(245, 166, 35, 0.2); color: #F5A623; }
     #status-badge.success { background: rgba(80, 200, 120, 0.2); color: #50C878; }
     #status-badge.fail { background: rgba(245, 108, 108, 0.2); color: #F56C6C; }
     
-    /* 3D 標記 */
     #position-hud {
       position: absolute;
       bottom: 70px;
@@ -396,10 +300,28 @@
       border: 1px solid rgba(255,255,255,0.05);
     }
     #position-hud span { color: #4A90D9; font-weight: 700; }
+    
+    /* Block tooltips */
+    .block-tooltip {
+      position: absolute;
+      background: rgba(20, 30, 50, 0.98);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      max-width: 280px;
+      z-index: 1000;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      pointer-events: none;
+      display: none;
+      line-height: 1.5;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    .block-tooltip h4 { color: var(--accent); margin-bottom: 6px; font-size: 14px; }
+    .block-tooltip.show { display: block; }
   </style>
 </head>
 <body>
-  <!-- 頂部 bar -->
   <div id="top-bar">
     <div id="logo-area">
       <span id="logo">🚁</span>
@@ -409,18 +331,18 @@
       <button class="level-btn active" data-level="1">1</button>
       <button class="level-btn" data-level="2">2</button>
       <button class="level-btn" data-level="3">3</button>
-      <button class="level-btn" data-level="4">🔒</button>
-      <button class="level-btn" data-level="5">🔒</button>
+      <button class="level-btn" data-level="4">4</button>
+      <button class="level-btn" data-level="5">5</button>
     </div>
     <div id="top-btns">
-      <button class="top-btn" onclick="showHint()">💡 提示</button>
+      <button class="top-btn solution" onclick="showSolution()">💡 解答</button>
+      <button class="top-btn" onclick="showHint()">❓ 提示</button>
       <button class="top-btn" onclick="resetScene()">🔄 重置</button>
       <button class="top-btn" onclick="clearBlocks()">🗑️ 清除</button>
     </div>
   </div>
   
   <div id="main-content">
-    <!-- 左邊：3D 舞台 -->
     <div id="stage-panel">
       <div id="stage-header">
         <h3>🎮 遊戲舞台 <span id="cam-label">100%</span></h3>
@@ -435,7 +357,6 @@
       <div id="canvas-wrapper">
         <canvas id="renderCanvas"></canvas>
         
-        <!-- 疊加 UI -->
         <div id="overlay-ui">
           <div class="info-card">
             <div class="lbl">無人機</div>
@@ -445,7 +366,7 @@
             <div class="lbl">積木數量</div>
             <div class="val" id="block-num">0</div>
           </div>
-          <div class="info-card" id="score-card">
+          <div class="info-card">
             <div class="lbl">評分</div>
             <div class="val" id="score-val">☆☆☆</div>
           </div>
@@ -454,7 +375,6 @@
         <div id="goal-hud">🏁 終點</div>
         <div id="position-hud">X: <span id="pos-x">0</span> Z: <span id="pos-z">0</span></div>
         
-        <!-- 過關彈窗 -->
         <div id="win-modal">
           <div id="win-stars">⭐⭐⭐</div>
           <h2 id="win-title">過關了！</h2>
@@ -469,7 +389,6 @@
       </div>
     </div>
     
-    <!-- 右邊：Blockly -->
     <div id="blockly-panel">
       <div id="blockly-header">
         <h3>🧩 積木程式</h3>
@@ -495,41 +414,24 @@
     </div>
   </div>
 
-  <!-- Blockly 工具箱 -->
   <xml id="toolbox" style="display: none">
     <category name="🚀 移動" colour="#4A90D9">
       <block type="drone_takeoff"></block>
       <block type="drone_forward">
-        <value name="STEPS">
-          <shadow type="math_number">
-            <field name="NUM">1</field>
-          </shadow>
-        </value>
+        <value name="STEPS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
       </block>
       <block type="drone_backward">
-        <value name="STEPS">
-          <shadow type="math_number">
-            <field name="NUM">1</field>
-          </shadow>
-        </value>
+        <value name="STEPS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
       </block>
       <block type="drone_left_turn"></block>
       <block type="drone_right_turn"></block>
     </category>
     <category name="🎯 控制" colour="#F5A623">
       <block type="drone_wait">
-        <value name="SECONDS">
-          <shadow type="math_number">
-            <field name="NUM">1</field>
-          </shadow>
-        </value>
+        <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
       </block>
       <block type="drone_repeat">
-        <value name="TIMES">
-          <shadow type="math_number">
-            <field name="NUM">3</field>
-          </shadow>
-        </value>
+        <value name="TIMES"><shadow type="math_number"><field name="NUM">3</field></shadow></value>
       </block>
       <block type="drone_if"></block>
     </category>
@@ -544,76 +446,115 @@
     </category>
   </xml>
 
+  <!-- Block tooltip -->
+  <div id="block-tooltip" class="block-tooltip">
+    <h4 id="tooltip-title">積木說明</h4>
+    <div id="tooltip-desc">描述</div>
+  </div>
+
   <script>
     // ===== 全域變數 =====
     let canvas, engine, scene, camera;
     let droneNode, droneMeshes = [];
     let groundMesh, goalMesh;
     let shadowGenerator = null;
+    let obstacles = [];
+    let trailParticles = [];
     
     let dronePos = { x: 0, z: 0 };
     let droneY = 0.5;
-    let droneDirection = 0; // 0=+Z, 90=+X, 180=-Z, 270=-X
+    let droneDirection = 0;
     let isFlying = false;
     let isExecuting = false;
     let currentLevel = 0;
     let blockCount = 0;
+    let completedLevels = new Set();
     
     let zoomLevel = 100;
+    
+    // ===== 積木說明 =====
+    const BLOCK_HELP = {
+      drone_takeoff: { title: '🚀 起飛', desc: '讓無人機起飛到空中。起飛後才能移動喔！' },
+      drone_forward: { title: '⬆️ 前進', desc: '讓無人機向前移動。數字越大，飛得越遠。' },
+      drone_backward: { title: '⬇️ 後退', desc: '讓無人機向後移動。' },
+      drone_left_turn: { title: '↩️ 左轉', desc: '讓無人機向左轉90度。改變方向但不前進。' },
+      drone_right_turn: { title: '↪️ 右轉', desc: '讓無人機向右轉90度。' },
+      drone_wait: { title: '⏱️ 等待', desc: '讓無人機在空中停一會兒。數字越大，停得越久。' },
+      drone_repeat: { title: '🔄 重複', desc: '重複執行裡面的積木。數字是多少就執行多少次。' },
+      drone_if: { title: '⚠️ 如果', desc: '如果前方有障礙物，就執行裡面的積木。' },
+      drone_led_green: { title: '💚 LED綠', desc: '把無人機的LED燈變成綠色。' },
+      drone_led_red: { title: '❤️ LED紅', desc: '把無人機的LED燈變成紅色。' },
+      drone_led_yellow: { title: '💛 LED黃', desc: '把無人機的LED燈變成黃色。' },
+      drone_land: { title: '🛬 着陸', desc: '讓無人機降落。着陸後就不能再移動了。' },
+      drone_stop: { title: '⏹️ 停止', desc: '立即停止執行所有積木。' }
+    };
     
     // ===== 關卡數據 =====
     const LEVELS = [
       {
-        name: "第一關：起飛着陸",
-        hint: "🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸",
+        name: '第一關：起飛着陸',
+        hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸',
+        solution: ['drone_takeoff', 'drone_forward', 'drone_forward', 'drone_forward', 'drone_land'],
         start: { x: -6, z: 0 },
         goal: { x: 3, z: 0 },
-        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }
+        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 },
+        obstacles: []
       },
       {
-        name: "第二關：轉向前進",
-        hint: "🎯 目標：L 形路線，先前進再左轉，然後着陸\n\n💡 提示：起飛 → 前進 → 左轉 → 前進 → 着陸",
+        name: '第二關：轉向前進',
+        hint: '🎯 目標：L 形路線，先前進再左轉，然後着陸\n\n💡 提示：起飛 → 前進 → 左轉 → 前進 → 着陸',
+        solution: ['drone_takeoff', 'drone_forward', 'drone_left_turn', 'drone_forward', 'drone_forward', 'drone_land'],
         start: { x: -6, z: 4 },
         goal: { x: -2, z: -4 },
-        cameraPos: { alpha: -Math.PI / 2.5, beta: Math.PI / 3.5, radius: 20 }
+        cameraPos: { alpha: -Math.PI / 2.5, beta: Math.PI / 3.5, radius: 20 },
+        obstacles: []
       },
       {
-        name: "第三關：正方形",
-        hint: "🎯 目標：走正方形路線回到起點附近\n\n💡 提示：前進 → 右轉 × 3（正方形）→ 着陸",
-        start: { x: 0, z: 4 },
-        goal: { x: 0, z: 4 },
-        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 4, radius: 22 }
+        name: '第三關：正方形',
+        hint: '🎯 目標：走正方形路線\n\n💡 提示：前進 → 右轉 × 3（正方形）→ 着陸',
+        solution: ['drone_takeoff', 'drone_forward', 'drone_right_turn', 'drone_forward', 'drone_right_turn', 'drone_forward', 'drone_right_turn', 'drone_forward', 'drone_land'],
+        start: { x: 0, z: 5 },
+        goal: { x: 0, z: 5 },
+        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 4, radius: 22 },
+        obstacles: []
       },
       {
-        name: "第四關：長距離",
-        hint: "🎯 目標：穿越整個客廳到終點\n\n💡 提示：使用「重複」積木減少積木數量",
+        name: '第四關：長距離',
+        hint: '🎯 目標：穿越整個客廳到終點\n\n💡 提示：使用「重複」積木減少積木數量',
+        solution: ['drone_takeoff', 'drone_repeat', 'drone_forward', 'drone_land'],
         start: { x: -8, z: 0 },
         goal: { x: 8, z: 0 },
-        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 25 }
+        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 25 },
+        obstacles: [
+          { x: 0, z: 0, w: 1.5, h: 8, color: '#8B4513' }
+        ]
       },
       {
-        name: "第五關：迷宮挑戰",
-        hint: "🎯 目標：繞過障礙物到達終點\n\n💡 提示：需要多次轉向來繞過障礙",
+        name: '第五關：迷宮挑戰',
+        hint: '🎯 目標：繞過障礙物到達終點\n\n💡 提示：需要多次轉向來繞過障礙',
+        solution: ['drone_takeoff', 'drone_forward', 'drone_forward', 'drone_left_turn', 'drone_forward', 'drone_forward', 'drone_right_turn', 'drone_forward', 'drone_forward', 'drone_land'],
         start: { x: -7, z: 5 },
         goal: { x: 7, z: -5 },
-        cameraPos: { alpha: -Math.PI / 1.8, beta: Math.PI / 3.5, radius: 24 }
+        cameraPos: { alpha: -Math.PI / 1.8, beta: Math.PI / 3.5, radius: 24 },
+        obstacles: [
+          { x: -3, z: 2, w: 6, h: 1, color: '#654321' },
+          { x: 3, z: -2, w: 6, h: 1, color: '#654321' }
+        ]
       }
     ];
     
     // ===== Blockly 積木定義 =====
     function defineBlocks() {
-      // 起飛
       Blockly.Blocks['drone_takeoff'] = {
         init: function() {
           this.appendDummyInput().appendField('🚀 起飛');
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#4A90D9');
-          this.setTooltip('讓無人機起飛到空中');
+          this.setTooltip(BLOCK_HELP.drone_takeoff.desc);
         }
       };
       
-      // 前進
       Blockly.Blocks['drone_forward'] = {
         init: function() {
           this.appendValueInput('STEPS').appendField('⬆️ 前進').setCheck('Number');
@@ -621,10 +562,10 @@
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#4A90D9');
+          this.setTooltip(BLOCK_HELP.drone_forward.desc);
         }
       };
       
-      // 後退
       Blockly.Blocks['drone_backward'] = {
         init: function() {
           this.appendValueInput('STEPS').appendField('⬇️ 後退').setCheck('Number');
@@ -632,30 +573,30 @@
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#4A90D9');
+          this.setTooltip(BLOCK_HELP.drone_backward.desc);
         }
       };
       
-      // 左轉
       Blockly.Blocks['drone_left_turn'] = {
         init: function() {
           this.appendDummyInput().appendField('↩️ 左轉 90°');
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#4A90D9');
+          this.setTooltip(BLOCK_HELP.drone_left_turn.desc);
         }
       };
       
-      // 右轉
       Blockly.Blocks['drone_right_turn'] = {
         init: function() {
           this.appendDummyInput().appendField('↪️ 右轉 90°');
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#4A90D9');
+          this.setTooltip(BLOCK_HELP.drone_right_turn.desc);
         }
       };
       
-      // 等待
       Blockly.Blocks['drone_wait'] = {
         init: function() {
           this.appendValueInput('SECONDS').appendField('⏱️ 等待').setCheck('Number');
@@ -663,10 +604,10 @@
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#F5A623');
+          this.setTooltip(BLOCK_HELP.drone_wait.desc);
         }
       };
       
-      // 重複
       Blockly.Blocks['drone_repeat'] = {
         init: function() {
           this.appendValueInput('TIMES').appendField('🔄 重複').setCheck('Number');
@@ -675,10 +616,10 @@
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#F5A623');
+          this.setTooltip(BLOCK_HELP.drone_repeat.desc);
         }
       };
       
-      // 條件
       Blockly.Blocks['drone_if'] = {
         init: function() {
           this.appendDummyInput().appendField('⚠️ 如果前方有障礙');
@@ -686,56 +627,57 @@
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#F5A623');
+          this.setTooltip(BLOCK_HELP.drone_if.desc);
         }
       };
       
-      // LED 綠
       Blockly.Blocks['drone_led_green'] = {
         init: function() {
           this.appendDummyInput().appendField('💚 LED 綠');
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#9B59B6');
+          this.setTooltip(BLOCK_HELP.drone_led_green.desc);
         }
       };
       
-      // LED 紅
       Blockly.Blocks['drone_led_red'] = {
         init: function() {
           this.appendDummyInput().appendField('❤️ LED 紅');
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#9B59B6');
+          this.setTooltip(BLOCK_HELP.drone_led_red.desc);
         }
       };
       
-      // LED 黃
       Blockly.Blocks['drone_led_yellow'] = {
         init: function() {
           this.appendDummyInput().appendField('💛 LED 黃');
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#9B59B6');
+          this.setTooltip(BLOCK_HELP.drone_led_yellow.desc);
         }
       };
       
-      // 着陸
       Blockly.Blocks['drone_land'] = {
         init: function() {
           this.appendDummyInput().appendField('🛬 着陸');
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#F56C6C');
+          this.setTooltip(BLOCK_HELP.drone_land.desc);
         }
       };
       
-      // 停止
       Blockly.Blocks['drone_stop'] = {
         init: function() {
           this.appendDummyInput().appendField('⏹️ 停止');
           this.setPreviousStatement(true, null);
           this.setNextStatement(true, null);
           this.setColour('#F56C6C');
+          this.setTooltip(BLOCK_HELP.drone_stop.desc);
         }
       };
     }
@@ -743,16 +685,11 @@
     // ===== Babylon.js 初始化 =====
     function initBabylon() {
       canvas = document.getElementById('renderCanvas');
-      engine = new BABYLON.Engine(canvas, true, { 
-        preserveDrawingBuffer: true, 
-        stencil: true,
-        antialias: true
-      });
+      engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, antialias: true });
       
       scene = new BABYLON.Scene(engine);
       scene.clearColor = new BABYLON.Color4(0.04, 0.08, 0.13, 1);
       
-      // 攝影機
       camera = new BABYLON.ArcRotateCamera('cam', -Math.PI / 2, Math.PI / 3, 18, BABYLON.Vector3.Zero(), scene);
       camera.attachControl(canvas, true);
       camera.lowerRadiusLimit = 8;
@@ -762,47 +699,34 @@
       camera.wheelPrecision = 30;
       camera.pinchPrecision = 50;
       
-      // 半球光
       const hemi = new BABYLON.HemisphericLight('hemi', new BABYLON.Vector3(0, 1, 0), scene);
       hemi.intensity = 0.5;
       hemi.groundColor = new BABYLON.Color3(0.15, 0.15, 0.2);
       
-      // 方向光
       const dirLight = new BABYLON.DirectionalLight('dir', new BABYLON.Vector3(-1, -2, -1), scene);
       dirLight.intensity = 0.9;
       dirLight.position = new BABYLON.Vector3(10, 20, 10);
       
-      // 陰影
       shadowGenerator = new BABYLON.ShadowGenerator(1024, dirLight);
       shadowGenerator.useBlurExponentialShadowMap = true;
       shadowGenerator.blurKernel = 32;
       
-      // 建立場景
       createRoom();
       createDrone();
       createGoal();
       
-      // 渲染循環
       engine.runRenderLoop(() => scene.render());
-      
-      // 視窗調整
       window.addEventListener('resize', () => engine.resize());
     }
     
-    // ===== 建立房間 =====
     function createRoom() {
-      // 地板
       groundMesh = BABYLON.MeshBuilder.CreateGround('floor', { width: 28, height: 20 }, scene);
       const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
       
-      // 地板紋理
       const floorTex = new BABYLON.DynamicTexture('floorTex', { width: 1024, height: 1024 }, scene);
       const ctx = floorTex.getContext();
-      
-      // 木地板圖案
       ctx.fillStyle = '#8B7355';
       ctx.fillRect(0, 0, 1024, 1024);
-      
       for (let i = 0; i < 14; i++) {
         ctx.strokeStyle = '#7a6348';
         ctx.lineWidth = 2;
@@ -810,8 +734,6 @@
         ctx.moveTo(i * 73, 0);
         ctx.lineTo(i * 73, 1024);
         ctx.stroke();
-        
-        // 木紋
         ctx.strokeStyle = 'rgba(90, 70, 50, 0.15)';
         ctx.lineWidth = 1;
         for (let j = 0; j < 8; j++) {
@@ -822,43 +744,31 @@
         }
       }
       floorTex.update();
-      
       floorMat.diffuseTexture = floorTex;
       floorMat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
       groundMesh.material = floorMat;
       groundMesh.receiveShadows = true;
       
-      // 牆壁
       const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
       wallMat.diffuseColor = new BABYLON.Color3(0.55, 0.75, 0.85);
       wallMat.alpha = 0.25;
       wallMat.backFaceCulling = false;
       
-      const wallHeight = 10;
-      
-      // 後牆
-      const backWall = BABYLON.MeshBuilder.CreatePlane('backWall', { width: 28, height: wallHeight }, scene);
-      backWall.position = new BABYLON.Vector3(0, wallHeight / 2, -10);
+      const backWall = BABYLON.MeshBuilder.CreatePlane('backWall', { width: 28, height: 10 }, scene);
+      backWall.position = new BABYLON.Vector3(0, 5, -10);
       backWall.material = wallMat;
       
-      // 左牆
-      const leftWall = BABYLON.MeshBuilder.CreatePlane('leftWall', { width: 20, height: wallHeight }, scene);
-      leftWall.position = new BABYLON.Vector3(-14, wallHeight / 2, 0);
+      const leftWall = BABYLON.MeshBuilder.CreatePlane('leftWall', { width: 20, height: 10 }, scene);
+      leftWall.position = new BABYLON.Vector3(-14, 5, 0);
       leftWall.rotation.y = Math.PI / 2;
       leftWall.material = wallMat;
       
-      // 右牆
-      const rightWall = BABYLON.MeshBuilder.CreatePlane('rightWall', { width: 20, height: wallHeight }, scene);
-      rightWall.position = new BABYLON.Vector3(14, wallHeight / 2, 0);
+      const rightWall = BABYLON.MeshBuilder.CreatePlane('rightWall', { width: 20, height: 10 }, scene);
+      rightWall.position = new BABYLON.Vector3(14, 5, 0);
       rightWall.rotation.y = -Math.PI / 2;
       rightWall.material = wallMat;
       
       // 家具
-      createFurniture();
-    }
-    
-    function createFurniture() {
-      // 梳化
       const sofa = BABYLON.MeshBuilder.CreateBox('sofa', { width: 5, height: 1.2, depth: 1.8 }, scene);
       sofa.position = new BABYLON.Vector3(-9, 0.6, -6);
       const sofaMat = new BABYLON.StandardMaterial('sofaMat', scene);
@@ -867,7 +777,6 @@
       sofa.receiveShadows = true;
       if (shadowGenerator) shadowGenerator.addShadowCaster(sofa);
       
-      // 茶几
       const table = BABYLON.MeshBuilder.CreateBox('table', { width: 2.5, height: 0.7, depth: 1.5 }, scene);
       table.position = new BABYLON.Vector3(5, 0.35, -6);
       const tableMat = new BABYLON.StandardMaterial('tableMat', scene);
@@ -876,7 +785,6 @@
       table.receiveShadows = true;
       if (shadowGenerator) shadowGenerator.addShadowCaster(table);
       
-      // 盆栽
       const pot = BABYLON.MeshBuilder.CreateCylinder('pot', { height: 0.8, diameterTop: 0.6, diameterBottom: 0.5 }, scene);
       pot.position = new BABYLON.Vector3(-5, 0.4, -6);
       const potMat = new BABYLON.StandardMaterial('potMat', scene);
@@ -890,7 +798,6 @@
       plant.material = plantMat;
       if (shadowGenerator) shadowGenerator.addShadowCaster(plant);
       
-      // 電視櫃
       const tvUnit = BABYLON.MeshBuilder.CreateBox('tvUnit', { width: 4, height: 0.8, depth: 0.5 }, scene);
       tvUnit.position = new BABYLON.Vector3(0, 0.4, -9);
       const tvMat = new BABYLON.StandardMaterial('tvMat', scene);
@@ -899,12 +806,10 @@
       tvUnit.receiveShadows = true;
     }
     
-    // ===== 建立無人機 =====
     function createDrone() {
       droneNode = new BABYLON.TransformNode('drone', scene);
       droneMeshes = [];
       
-      // 主體
       const body = BABYLON.MeshBuilder.CreateBox('body', { width: 0.9, height: 0.3, depth: 0.9 }, scene);
       body.parent = droneNode;
       const bodyMat = new BABYLON.StandardMaterial('bodyMat', scene);
@@ -913,16 +818,10 @@
       body.material = bodyMat;
       droneMeshes.push(body);
       
-      // 機臂
       const armMat = new BABYLON.StandardMaterial('armMat', scene);
       armMat.diffuseColor = new BABYLON.Color3(0.18, 0.2, 0.25);
       
-      const armPositions = [
-        { x: 0.7, z: 0.7 },
-        { x: -0.7, z: 0.7 },
-        { x: 0.7, z: -0.7 },
-        { x: -0.7, z: -0.7 }
-      ];
+      const armPositions = [{ x: 0.7, z: 0.7 }, { x: -0.7, z: 0.7 }, { x: 0.7, z: -0.7 }, { x: -0.7, z: -0.7 }];
       
       armPositions.forEach((pos, i) => {
         const arm = BABYLON.MeshBuilder.CreateBox('arm' + i, { width: 0.1, height: 0.08, depth: 0.7 }, scene);
@@ -932,7 +831,6 @@
         arm.material = armMat;
         droneMeshes.push(arm);
         
-        // 螺旋槳座
         const motor = BABYLON.MeshBuilder.CreateCylinder('motor' + i, { height: 0.15, diameter: 0.25 }, scene);
         motor.position = new BABYLON.Vector3(pos.x * 1.1, 0.12, pos.z * 1.1);
         motor.parent = droneNode;
@@ -941,7 +839,6 @@
         motor.material = motorMat;
         droneMeshes.push(motor);
         
-        // 螺旋槳
         const prop = BABYLON.MeshBuilder.CreateCylinder('prop' + i, { height: 0.03, diameter: 0.6 }, scene);
         prop.position = new BABYLON.Vector3(pos.x * 1.1, 0.22, pos.z * 1.1);
         prop.parent = droneNode;
@@ -952,7 +849,6 @@
         droneMeshes.push(prop);
       });
       
-      // LED 燈
       const led = BABYLON.MeshBuilder.CreateSphere('led', { diameter: 0.15 }, scene);
       led.position = new BABYLON.Vector3(0, 0.18, -0.5);
       led.parent = droneNode;
@@ -962,7 +858,6 @@
       led.material = ledMat;
       droneMeshes.push(led);
       
-      // 攝影機
       const cam = BABYLON.MeshBuilder.CreateBox('fpvCam', { width: 0.2, height: 0.1, depth: 0.15 }, scene);
       cam.position = new BABYLON.Vector3(0, -0.12, -0.3);
       cam.parent = droneNode;
@@ -971,20 +866,12 @@
       cam.material = camMat;
       droneMeshes.push(cam);
       
-      // 陰影
       droneMeshes.forEach(mesh => {
         if (shadowGenerator) shadowGenerator.addShadowCaster(mesh);
       });
-      
-      // 起始位置
-      const level = LEVELS[currentLevel];
-      droneNode.position = new BABYLON.Vector3(level.start.x, 0.5, level.start.z);
-      dronePos = { x: level.start.x, z: level.start.z };
     }
     
-    // ===== 建立終點 =====
     function createGoal() {
-      // 圓形墊子
       goalMesh = BABYLON.MeshBuilder.CreateCylinder('goalPad', { height: 0.04, diameter: 2.5 }, scene);
       const goalMat = new BABYLON.StandardMaterial('goalMat', scene);
       goalMat.diffuseColor = new BABYLON.Color3(0.3, 0.7, 0.3);
@@ -992,7 +879,6 @@
       goalMat.alpha = 0.7;
       goalMesh.material = goalMat;
       
-      // 旗幟
       const pole = BABYLON.MeshBuilder.CreateCylinder('pole', { height: 2, diameter: 0.06 }, scene);
       pole.position.y = 1;
       pole.parent = goalMesh;
@@ -1008,13 +894,70 @@
       flagMat.diffuseColor = new BABYLON.Color3(0.95, 0.2, 0.2);
       flagMat.emissiveColor = new BABYLON.Color3(0.3, 0.05, 0.05);
       flag.material = flagMat;
-      
-      updateGoalPosition();
     }
     
     function updateGoalPosition() {
       const level = LEVELS[currentLevel];
       goalMesh.position = new BABYLON.Vector3(level.goal.x, 0.02, level.goal.z);
+      
+      // 清除舊障礙物
+      obstacles.forEach(o => o.dispose());
+      obstacles = [];
+      
+      // 添加新障礙物
+      level.obstacles.forEach(obs => {
+        const box = BABYLON.MeshBuilder.CreateBox('obstacle', { width: obs.w, height: 0.8, depth: obs.h }, scene);
+        box.position = new BABYLON.Vector3(obs.x, 0.4, obs.z);
+        const obsMat = new BABYLON.StandardMaterial('obsMat', scene);
+        obsMat.diffuseColor = new BABYLON.Color3(0.4, 0.25, 0.15);
+        obsMat.alpha = 0.9;
+        box.material = obsMat;
+        box.receiveShadows = true;
+        if (shadowGenerator) shadowGenerator.addShadowCaster(box);
+        obstacles.push(box);
+      });
+    }
+    
+    // ===== 障礙物碰撞檢測 =====
+    function checkCollision(x, z) {
+      const level = LEVELS[currentLevel];
+      const droneRadius = 0.6;
+      
+      // 檢查牆壁
+      if (x < -12 || x > 12 || z < -9 || z > 9) return true;
+      
+      // 檢查障礙物
+      for (const obs of level.obstacles) {
+        const hw = obs.w / 2 + droneRadius;
+        const hd = obs.h / 2 + droneRadius;
+        if (Math.abs(x - obs.x) < hw && Math.abs(z - obs.z) < hd) return true;
+      }
+      
+      return false;
+    }
+    
+    // ===== 路線軌跡 =====
+    function addTrailParticle(x, z) {
+      const particle = BABYLON.MeshBuilder.CreateSphere('trail', { diameter: 0.15 }, scene);
+      particle.position = new BABYLON.Vector3(x, 0.1, z);
+      const mat = new BABYLON.StandardMaterial('trailMat', scene);
+      mat.diffuseColor = new BABYLON.Color3(0.2, 0.6, 1);
+      mat.emissiveColor = new BABYLON.Color3(0.1, 0.3, 0.5);
+      mat.alpha = 0.6;
+      particle.material = mat;
+      trailParticles.push(particle);
+      
+      // 2秒後消失
+      setTimeout(() => {
+        particle.dispose();
+        const idx = trailParticles.indexOf(particle);
+        if (idx > -1) trailParticles.splice(idx, 1);
+      }, 2000);
+    }
+    
+    function clearTrail() {
+      trailParticles.forEach(p => p.dispose());
+      trailParticles = [];
     }
     
     // ===== 攝影機控制 =====
@@ -1074,17 +1017,19 @@
             cursorColour: '#667eea',
             blackBackground: '#0a1220'
           },
-          grid: {
-            spacing: 24,
-            length: 2,
-            colour: 'rgba(74, 144, 217, 0.12)',
-            snap: true
-          }
+          grid: { spacing: 24, length: 2, colour: 'rgba(74, 144, 217, 0.12)', snap: true }
         },
         media: 'https://unpkg.com/blockly@11.0.0/media/'
       });
       
       workspace.addChangeListener(updateBlockCount);
+      
+      // 積木懸停提示
+      workspace.addChangeListener(e => {
+        if (e.type === Blockly.Events.BLOCK_HOVER) {
+          showBlockTooltip(e.blockId);
+        }
+      });
     }
     
     function updateBlockCount() {
@@ -1093,6 +1038,26 @@
       document.getElementById('block-counter').textContent = `${blockCount} 個積木`;
       document.getElementById('block-count').textContent = `${blockCount} 個積木`;
       document.getElementById('block-num').textContent = blockCount;
+    }
+    
+    function showBlockTooltip(blockId) {
+      const block = workspace.getBlockById(blockId);
+      if (!block) return;
+      
+      const help = BLOCK_HELP[block.type];
+      if (!help) return;
+      
+      const tooltip = document.getElementById('block-tooltip');
+      document.getElementById('tooltip-title').textContent = help.title;
+      document.getElementById('tooltip-desc').textContent = help.desc;
+      
+      // 顯示在積木附近
+      const xy = block.getRelativeToSurfaceXY();
+      tooltip.style.left = (xy.x + 200) + 'px';
+      tooltip.style.top = (xy.y + 100) + 'px';
+      tooltip.classList.add('show');
+      
+      setTimeout(() => tooltip.classList.remove('show'), 2000);
     }
     
     // ===== 執行積木程式 =====
@@ -1110,30 +1075,26 @@
       document.getElementById('run-btn').disabled = true;
       setStatus('running', '🔄 執行中...');
       
+      clearTrail();
       resetDroneState();
       
-      // 收集所有積木並按順序執行
       const blocksToExecute = [];
       const visited = new Set();
       
-      // 按順序遍歷所有積木（跟隨連接鏈）
       function collectBlocks(block) {
         if (!block || visited.has(block.id)) return;
         visited.add(block.id);
         blocksToExecute.push(block);
-        
-        // 檢查下一個連接的積木
         const nextBlock = block.getNextBlock();
         if (nextBlock) collectBlocks(nextBlock);
       }
       
-      // 從每個頂部積木開始收集
       const topBlocks = workspace.getTopBlocks();
       topBlocks.forEach(block => collectBlocks(block));
       
-      // 執行所有積木
       for (const block of blocksToExecute) {
         await executeBlock(block);
+        if (!isExecuting) break;
       }
       
       isExecuting = false;
@@ -1161,7 +1122,6 @@
       let steps = 1;
       let seconds = 1;
       
-      // 獲取參數
       switch (type) {
         case 'drone_forward':
         case 'drone_backward':
@@ -1184,7 +1144,6 @@
           break;
       }
       
-      // 執行動作
       switch (type) {
         case 'drone_takeoff':
           await animateTakeoff();
@@ -1216,7 +1175,18 @@
           if (childBlock) {
             for (let i = 0; i < steps; i++) {
               await executeBlock(childBlock);
+              if (!isExecuting) break;
             }
+          }
+          break;
+        case 'drone_if':
+          // 檢查前方是否有障礙
+          const rad = droneDirection * Math.PI / 180;
+          const nextX = dronePos.x + Math.cos(rad) * 2;
+          const nextZ = dronePos.z + Math.sin(rad) * 2;
+          if (checkCollision(nextX, nextZ)) {
+            const childBlock = block.getInput('DO')?.connection?.targetBlock();
+            if (childBlock) await executeBlock(childBlock);
           }
           break;
         case 'drone_led_green':
@@ -1240,6 +1210,7 @@
       if (!isFlying) {
         isFlying = true;
         updateDroneUI('😀', '起飛中');
+        createParticleEffect(droneNode.position.x, droneNode.position.z, 'takeoff');
         
         const startY = droneY;
         const targetY = 2.5;
@@ -1250,19 +1221,12 @@
           function animate() {
             const t = Math.min((Date.now() - startTime) / duration, 1);
             const eased = 1 - Math.pow(1 - t, 3);
-            
             droneY = startY + (targetY - startY) * eased;
             droneNode.position.y = droneY;
-            
-            // 輕微晃動
             droneNode.rotation.x = Math.sin(t * 20) * 0.015;
             droneNode.rotation.z = Math.cos(t * 15) * 0.015;
-            
             if (t < 1) requestAnimationFrame(animate);
-            else {
-              droneNode.rotation = BABYLON.Vector3.Zero();
-              resolve();
-            }
+            else { droneNode.rotation = BABYLON.Vector3.Zero(); resolve(); }
           }
           animate();
         });
@@ -1278,11 +1242,20 @@
       const dx = Math.cos(rad) * dir * 1.5;
       const dz = Math.sin(rad) * dir * 1.5;
       
+      const targetX = dronePos.x + dx;
+      const targetZ = dronePos.z + dz;
+      
+      // 碰撞檢測
+      if (checkCollision(targetX, targetZ)) {
+        updateDroneUI('😱', '撞到了！');
+        setStatus('fail', '💥 撞到障礙物！');
+        playFailSound();
+        isExecuting = false;
+        return;
+      }
+      
       const startX = dronePos.x;
       const startZ = dronePos.z;
-      const targetX = startX + dx;
-      const targetZ = startZ + dz;
-      
       const duration = 400;
       const startTime = Date.now();
       
@@ -1290,18 +1263,16 @@
         function animate() {
           const t = Math.min((Date.now() - startTime) / duration, 1);
           const eased = 1 - Math.pow(1 - t, 2);
-          
           dronePos.x = startX + (targetX - startX) * eased;
           dronePos.z = startZ + (targetZ - startZ) * eased;
           droneNode.position.x = dronePos.x;
           droneNode.position.z = dronePos.z;
           
+          // 添加軌跡
+          addTrailParticle(dronePos.x, dronePos.z);
+          
           if (t < 1) requestAnimationFrame(animate);
-          else {
-            dronePos.x = targetX;
-            dronePos.z = targetZ;
-            resolve();
-          }
+          else { dronePos.x = targetX; dronePos.z = targetZ; resolve(); }
         }
         animate();
       });
@@ -1316,7 +1287,6 @@
       const targetRot = (droneDirection + angle + 360) % 360;
       const startYRot = droneNode.rotation.y;
       const targetYRot = angle * Math.PI / 180;
-      
       const duration = 350;
       const startTime = Date.now();
       
@@ -1324,15 +1294,9 @@
         function animate() {
           const t = Math.min((Date.now() - startTime) / duration, 1);
           const eased = 1 - Math.pow(1 - t, 2);
-          
           droneNode.rotation.y = startYRot + (targetYRot - startYRot) * eased;
-          
           if (t < 1) requestAnimationFrame(animate);
-          else {
-            droneDirection = targetRot;
-            droneNode.rotation.y = targetYRot;
-            resolve();
-          }
+          else { droneDirection = targetRot; droneNode.rotation.y = targetYRot; resolve(); }
         }
         animate();
       });
@@ -1341,6 +1305,7 @@
     async function animateLand() {
       isFlying = false;
       updateDroneUI('🥰', '降落中');
+      createParticleEffect(droneNode.position.x, droneNode.position.z, 'land');
       
       const startY = droneY;
       const targetY = 0.5;
@@ -1351,19 +1316,56 @@
         function animate() {
           const t = Math.min((Date.now() - startTime) / duration, 1);
           const eased = t * t;
-          
           droneY = startY + (targetY - startY) * eased;
           droneNode.position.y = droneY;
-          
           if (t < 1) requestAnimationFrame(animate);
-          else {
-            droneY = targetY;
-            droneNode.position.y = targetY;
-            resolve();
-          }
+          else { droneY = targetY; droneNode.position.y = targetY; resolve(); }
         }
         animate();
       });
+    }
+    
+    // ===== 粒子效果 =====
+    function createParticleEffect(x, z, type) {
+      const particleSystem = new BABYLON.ParticleSystem('particles', 30, scene);
+      particleSystem.particleTexture = new BABYLON.Texture('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGklEQVQYV2NkYGD4z4AHMDLQAowMowAy0w8DAJbNAwU7lNqCAAAAAElFTkSuQmCC', scene);
+      
+      particleSystem.emitter = new BABYLON.Vector3(x, type === 'takeoff' ? 0.5 : 0.2, z);
+      particleSystem.minEmitBox = new BABYLON.Vector3(-0.5, 0, -0.5);
+      particleSystem.maxEmitBox = new BABYLON.Vector3(0.5, 0, 0.5);
+      
+      if (type === 'takeoff') {
+        particleSystem.color1 = new BABYLON.Color4(0.2, 0.8, 1, 1);
+        particleSystem.color2 = new BABYLON.Color4(0.5, 0.9, 1, 1);
+        particleSystem.colorDead = new BABYLON.Color4(0.2, 0.6, 1, 0);
+        particleSystem.minSize = 0.1;
+        particleSystem.maxSize = 0.3;
+        particleSystem.minLifeTime = 0.5;
+        particleSystem.maxLifeTime = 1;
+        particleSystem.emitRate = 30;
+        particleSystem.gravity = new BABYLON.Vector3(0, 2, 0);
+        particleSystem.direction1 = new BABYLON.Vector3(-0.5, 1, -0.5);
+        particleSystem.direction2 = new BABYLON.Vector3(0.5, 1, 0.5);
+      } else {
+        particleSystem.color1 = new BABYLON.Color4(0.8, 0.6, 0.2, 1);
+        particleSystem.color2 = new BABYLON.Color4(1, 0.8, 0.3, 1);
+        particleSystem.colorDead = new BABYLON.Color4(0.8, 0.6, 0.2, 0);
+        particleSystem.minSize = 0.15;
+        particleSystem.maxSize = 0.4;
+        particleSystem.minLifeTime = 0.3;
+        particleSystem.maxLifeTime = 0.8;
+        particleSystem.emitRate = 50;
+        particleSystem.gravity = new BABYLON.Vector3(0, -3, 0);
+        particleSystem.direction1 = new BABYLON.Vector3(-1, -0.5, -1);
+        particleSystem.direction2 = new BABYLON.Vector3(1, -0.5, 1);
+      }
+      
+      particleSystem.minEmitPower = 0.5;
+      particleSystem.maxEmitPower = 1;
+      particleSystem.updateSpeed = 0.01;
+      
+      particleSystem.start();
+      setTimeout(() => { particleSystem.stop(); setTimeout(() => particleSystem.dispose(), 1000); }, 500);
     }
     
     function setLEDColor(r, g, b) {
@@ -1375,9 +1377,7 @@
       });
     }
     
-    function delay(ms) {
-      return new Promise(r => setTimeout(r, ms));
-    }
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
     
     // ===== UI 更新 =====
     function updateDroneUI(expr, text) {
@@ -1402,16 +1402,18 @@
       
       if (dx < 1.8 && dz < 1.8) {
         showWin();
-      } else if (isFlying) {
-        setStatus('fail', '❌ 未到達終點！');
+      } else if (isExecuting === false && !droneFlying) {
+        // 已着陸但未到終點
+        setStatus('fail', '❌ 着陸了但未到終點！');
         playFailSound();
       }
     }
     
     function showWin() {
       setStatus('success', '🎉 過關了！');
+      completedLevels.add(currentLevel);
+      updateLevelButtons();
       
-      // 計算星星
       let stars = '⭐';
       if (blockCount <= 5) stars = '⭐⭐⭐';
       else if (blockCount <= 8) stars = '⭐⭐';
@@ -1466,13 +1468,9 @@
       document.getElementById('level-title').textContent = level.name;
       document.getElementById('level-indicator').textContent = `Level ${index + 1} / ${LEVELS.length}`;
       
-      // 更新關卡按鈕
-      document.querySelectorAll('.level-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i === index);
-        if (i > index + 1) btn.classList.add('locked');
-      });
+      updateLevelButtons();
       
-      // 重置場景
+      clearTrail();
       resetDroneState();
       droneNode.position = new BABYLON.Vector3(level.start.x, 0.5, level.start.z);
       dronePos = { x: level.start.x, z: level.start.z };
@@ -1481,10 +1479,19 @@
       resetCamera();
       updatePositionHUD();
       
-      // 清空積木
       workspace.clear();
       
       setStatus('ready', '準備就緒');
+    }
+    
+    function updateLevelButtons() {
+      document.querySelectorAll('.level-btn').forEach((btn, i) => {
+        btn.classList.remove('active', 'completed', 'locked');
+        if (i === currentLevel) btn.classList.add('active');
+        else if (completedLevels.has(i)) btn.classList.add('completed');
+        else if (i > currentLevel + 1) btn.classList.add('locked');
+        btn.textContent = completedLevels.has(i) ? '✓' : (i + 1);
+      });
     }
     
     function nextLevel() {
@@ -1498,10 +1505,12 @@
     
     function replayLevel() {
       document.getElementById('win-modal').classList.remove('show');
+      clearTrail();
       resetDroneState();
     }
     
     function resetScene() {
+      clearTrail();
       loadLevel(currentLevel);
     }
     
@@ -1514,28 +1523,62 @@
       const card = document.getElementById('hint-card');
       card.innerHTML = level.hint.replace(/\n/g, '<br>');
       card.classList.add('show');
-      
       setTimeout(() => card.classList.remove('show'), 6000);
     }
     
-    // 關卡選擇
+    function showSolution() {
+      const level = LEVELS[currentLevel];
+      const solution = level.solution;
+      
+      if (confirm('確定要載入解答範例嗎？')) {
+        workspace.clear();
+        
+        const blocks = {};
+        solution.forEach((type, i) => {
+          const block = workspace.newBlock(type);
+          block.initSvg();
+          block.render();
+          
+          // 設置參數值
+          if (type === 'drone_forward' || type === 'drone_backward') {
+            const input = block.getInput('STEPS');
+            const shadow = input.connection.targetBlock();
+            if (shadow) shadow.setFieldValue('1', 'NUM');
+          }
+          if (type === 'drone_repeat') {
+            const input = block.getInput('TIMES');
+            const shadow = input.connection.targetBlock();
+            if (shadow) shadow.setFieldValue('4', 'NUM');
+          }
+          
+          blocks[i] = block;
+        });
+        
+        // 連接積木
+        for (let i = 0; i < solution.length - 1; i++) {
+          blocks[i].nextConnection.connect(blocks[i + 1].previousConnection);
+        }
+        
+        updateBlockCount();
+        setStatus('ready', '已載入解答');
+      }
+    }
+    
     document.querySelectorAll('.level-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const level = parseInt(btn.dataset.level) - 1;
-        if (!isNaN(level) && level <= currentLevel + 1) {
+        if (!isNaN(level) && !btn.classList.contains('locked')) {
           loadLevel(level);
         }
       });
     });
     
-    // 點擊其他地方關閉提示
     document.addEventListener('click', e => {
       if (!e.target.closest('.top-btn') && !e.target.closest('#hint-card')) {
         document.getElementById('hint-card').classList.remove('show');
       }
     });
     
-    // 初始化
     window.addEventListener('load', () => {
       initBabylon();
       initBlockly();
