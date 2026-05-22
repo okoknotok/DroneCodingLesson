@@ -499,14 +499,38 @@
   <xml id="toolbox" style="display: none">
     <category name="🚀 移動" colour="#4A90D9">
       <block type="drone_takeoff"></block>
-      <block type="drone_forward"></block>
-      <block type="drone_backward"></block>
+      <block type="drone_forward">
+        <value name="STEPS">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="drone_backward">
+        <value name="STEPS">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+      </block>
       <block type="drone_left_turn"></block>
       <block type="drone_right_turn"></block>
     </category>
     <category name="🎯 控制" colour="#F5A623">
-      <block type="drone_wait"></block>
-      <block type="drone_repeat"></block>
+      <block type="drone_wait">
+        <value name="SECONDS">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="drone_repeat">
+        <value name="TIMES">
+          <shadow type="math_number">
+            <field name="NUM">3</field>
+          </shadow>
+        </value>
+      </block>
       <block type="drone_if"></block>
     </category>
     <category name="🎬 外觀" colour="#9B59B6">
