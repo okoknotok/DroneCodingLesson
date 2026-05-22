@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚁 無人機指令營 — 完整版</title>
+  <title>🚁 無人機指令營 — 專業版</title>
   
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-  <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
   <script src="https://unpkg.com/blockly@11.0.0/blockly.min.js"></script>
   
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -67,6 +66,7 @@
     .level-btn.active { border-color: white; background: rgba(255,255,255,0.3); }
     .level-btn.locked { opacity: 0.4; cursor: not-allowed; }
     .level-btn.completed { background: var(--success); }
+    
     #top-btns { display: flex; gap: 10px; }
     .top-btn {
       padding: 8px 18px;
@@ -84,6 +84,7 @@
     }
     .top-btn:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
     .top-btn.solution { background: rgba(245, 166, 35, 0.3); }
+    .top-btn.theme-toggle { font-size: 16px; }
     
     #main-content { flex: 1; display: flex; overflow: hidden; }
     
@@ -126,6 +127,43 @@
     }
     #renderCanvas { width: 100%; height: 100%; touch-action: none; display: block; }
     
+    /* Micro:bit LED Panel */
+    #led-panel {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(10, 18, 32, 0.95);
+      border-radius: 14px;
+      padding: 12px;
+      border: 2px solid #333;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    #led-panel h4 {
+      color: #888;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    #led-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+      width: 90px;
+    }
+    .led-pixel {
+      width: 16px;
+      height: 16px;
+      background: #1a3a5c;
+      border-radius: 2px;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .led-pixel.on {
+      background: #00ff88;
+      box-shadow: 0 0 8px #00ff88;
+    }
+    
     #overlay-ui {
       position: absolute;
       top: 12px;
@@ -147,8 +185,6 @@
     .info-card .val { color: white; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
     .info-card.success { border-color: var(--success); }
     .info-card .val.success { color: var(--success); }
-    .info-card.warning { border-color: var(--control-orange); }
-    .info-card .val.warning { color: var(--control-orange); }
     
     #goal-hud {
       position: absolute;
@@ -190,7 +226,7 @@
       60% { transform: scale(1.3) rotate(20deg); }
       100% { transform: scale(1) rotate(0); opacity: 1; }
     }
-    #win-modal h2 { color: white; font-size: 42px; margin-bottom: 8px; text-shadow: 0 4px 20px rgba(102, 126, 234, 0.5); }
+    #win-modal h2 { color: white; font-size: 42px; margin-bottom: 8px; }
     #win-modal p { color: #aaa; font-size: 20px; margin-bottom: 30px; }
     #win-buttons { display: flex; gap: 12px; }
     .win-btn {
@@ -301,24 +337,32 @@
     }
     #position-hud span { color: #4A90D9; font-weight: 700; }
     
-    /* Block tooltips */
-    .block-tooltip {
-      position: absolute;
-      background: rgba(20, 30, 50, 0.98);
-      color: white;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 13px;
-      max-width: 280px;
-      z-index: 1000;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-      pointer-events: none;
-      display: none;
-      line-height: 1.5;
-      border: 1px solid rgba(102, 126, 234, 0.3);
+    /* Scratch-style block styling */
+    .blocklyToolboxCategory .blocklyTreeRow {
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin: 2px 0;
     }
-    .block-tooltip h4 { color: var(--accent); margin-bottom: 6px; font-size: 14px; }
-    .block-tooltip.show { display: block; }
+    .blocklyFlyoutBackground {
+      fill: #1a2535 !important;
+      fill-opacity: 0.98 !important;
+    }
+    .blocklyToolbox {
+      background: #0d1525 !important;
+    }
+    .blocklyTreeRow {
+      cursor: pointer;
+    }
+    
+    /* Block snap animation */
+    @keyframes blockSnap {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .blocklyBlockSummary {
+      animation: blockSnap 0.2s ease-out;
+    }
   </style>
 </head>
 <body>
@@ -337,6 +381,7 @@
     <div id="top-btns">
       <button class="top-btn solution" onclick="showSolution()">💡 解答</button>
       <button class="top-btn" onclick="showHint()">❓ 提示</button>
+      <button class="top-btn theme-toggle" onclick="toggleTheme()">🌙</button>
       <button class="top-btn" onclick="resetScene()">🔄 重置</button>
       <button class="top-btn" onclick="clearBlocks()">🗑️ 清除</button>
     </div>
@@ -356,6 +401,38 @@
       
       <div id="canvas-wrapper">
         <canvas id="renderCanvas"></canvas>
+        
+        <!-- Micro:bit LED Panel -->
+        <div id="led-panel">
+          <h4>Micro:bit</h4>
+          <div id="led-grid">
+            <div class="led-pixel" data-x="0" data-y="0"></div>
+            <div class="led-pixel" data-x="1" data-y="0"></div>
+            <div class="led-pixel" data-x="2" data-y="0"></div>
+            <div class="led-pixel" data-x="3" data-y="0"></div>
+            <div class="led-pixel" data-x="4" data-y="0"></div>
+            <div class="led-pixel" data-x="0" data-y="1"></div>
+            <div class="led-pixel" data-x="1" data-y="1"></div>
+            <div class="led-pixel" data-x="2" data-y="1"></div>
+            <div class="led-pixel" data-x="3" data-y="1"></div>
+            <div class="led-pixel" data-x="4" data-y="1"></div>
+            <div class="led-pixel" data-x="0" data-y="2"></div>
+            <div class="led-pixel" data-x="1" data-y="2"></div>
+            <div class="led-pixel" data-x="2" data-y="2"></div>
+            <div class="led-pixel" data-x="3" data-y="2"></div>
+            <div class="led-pixel" data-x="4" data-y="2"></div>
+            <div class="led-pixel" data-x="0" data-y="3"></div>
+            <div class="led-pixel" data-x="1" data-y="3"></div>
+            <div class="led-pixel" data-x="2" data-y="3"></div>
+            <div class="led-pixel" data-x="3" data-y="3"></div>
+            <div class="led-pixel" data-x="4" data-y="3"></div>
+            <div class="led-pixel" data-x="0" data-y="4"></div>
+            <div class="led-pixel" data-x="1" data-y="4"></div>
+            <div class="led-pixel" data-x="2" data-y="4"></div>
+            <div class="led-pixel" data-x="3" data-y="4"></div>
+            <div class="led-pixel" data-x="4" data-y="4"></div>
+          </div>
+        </div>
         
         <div id="overlay-ui">
           <div class="info-card">
@@ -417,22 +494,14 @@
   <xml id="toolbox" style="display: none">
     <category name="🚀 移動" colour="#4A90D9">
       <block type="drone_takeoff"></block>
-      <block type="drone_forward">
-        <value name="STEPS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
-      </block>
-      <block type="drone_backward">
-        <value name="STEPS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
-      </block>
+      <block type="drone_forward"><value name="STEPS"><shadow type="math_number"><field name="NUM">1</field></shadow></value></block>
+      <block type="drone_backward"><value name="STEPS"><shadow type="math_number"><field name="NUM">1</field></shadow></value></block>
       <block type="drone_left_turn"></block>
       <block type="drone_right_turn"></block>
     </category>
     <category name="🎯 控制" colour="#F5A623">
-      <block type="drone_wait">
-        <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
-      </block>
-      <block type="drone_repeat">
-        <value name="TIMES"><shadow type="math_number"><field name="NUM">3</field></shadow></value>
-      </block>
+      <block type="drone_wait"><value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value></block>
+      <block type="drone_repeat"><value name="TIMES"><shadow type="math_number"><field name="NUM">3</field></shadow></value></block>
       <block type="drone_if"></block>
     </category>
     <category name="🎬 外觀" colour="#9B59B6">
@@ -446,20 +515,15 @@
     </category>
   </xml>
 
-  <!-- Block tooltip -->
-  <div id="block-tooltip" class="block-tooltip">
-    <h4 id="tooltip-title">積木說明</h4>
-    <div id="tooltip-desc">描述</div>
-  </div>
-
   <script>
-    // ===== 全域變數 =====
+    // ===== Global Variables =====
     let canvas, engine, scene, camera;
-    let droneNode, droneMeshes = [];
+    let droneNode, droneMeshes = [], propellers = [];
     let groundMesh, goalMesh;
     let shadowGenerator = null;
     let obstacles = [];
     let trailParticles = [];
+    let tvScreen, clockHourHand, clockMinuteHand;
     
     let dronePos = { x: 0, z: 0 };
     let droneY = 0.5;
@@ -469,220 +533,94 @@
     let currentLevel = 0;
     let blockCount = 0;
     let completedLevels = new Set();
+    let propSpeed = 0;
+    let targetPropSpeed = 0;
+    let isDarkTheme = true;
+    let currentLedPattern = null;
+    let ledAnimationTime = 0;
     
     let zoomLevel = 100;
     
-    // ===== 積木說明 =====
-    const BLOCK_HELP = {
-      drone_takeoff: { title: '🚀 起飛', desc: '讓無人機起飛到空中。起飛後才能移動喔！' },
-      drone_forward: { title: '⬆️ 前進', desc: '讓無人機向前移動。數字越大，飛得越遠。' },
-      drone_backward: { title: '⬇️ 後退', desc: '讓無人機向後移動。' },
-      drone_left_turn: { title: '↩️ 左轉', desc: '讓無人機向左轉90度。改變方向但不前進。' },
-      drone_right_turn: { title: '↪️ 右轉', desc: '讓無人機向右轉90度。' },
-      drone_wait: { title: '⏱️ 等待', desc: '讓無人機在空中停一會兒。數字越大，停得越久。' },
-      drone_repeat: { title: '🔄 重複', desc: '重複執行裡面的積木。數字是多少就執行多少次。' },
-      drone_if: { title: '⚠️ 如果', desc: '如果前方有障礙物，就執行裡面的積木。' },
-      drone_led_green: { title: '💚 LED綠', desc: '把無人機的LED燈變成綠色。' },
-      drone_led_red: { title: '❤️ LED紅', desc: '把無人機的LED燈變成紅色。' },
-      drone_led_yellow: { title: '💛 LED黃', desc: '把無人機的LED燈變成黃色。' },
-      drone_land: { title: '🛬 着陸', desc: '讓無人機降落。着陸後就不能再移動了。' },
-      drone_stop: { title: '⏹️ 停止', desc: '立即停止執行所有積木。' }
+    // ===== LED Patterns =====
+    const LED_PATTERNS = {
+      idle: [
+        [0,0,0,0,0],
+        [0,0,0,0,0],
+        [0,0,1,0,0],
+        [0,0,0,0,0],
+        [0,0,0,0,0]
+      ],
+      happy: [
+        [0,1,0,1,0],
+        [0,0,0,0,0],
+        [0,0,0,0,0],
+        [1,0,0,0,1],
+        [0,1,1,1,0]
+      ],
+      forward: [
+        [0,0,1,0,0],
+        [0,1,1,1,0],
+        [1,0,1,0,1],
+        [0,0,1,0,0],
+        [0,0,1,0,0]
+      ],
+      left: [
+        [0,0,1,0,0],
+        [0,1,0,0,0],
+        [1,1,1,1,1],
+        [0,1,0,0,0],
+        [0,0,1,0,0]
+      ],
+      right: [
+        [0,0,1,0,0],
+        [0,0,1,0,0],
+        [1,1,1,1,1],
+        [0,0,1,0,0],
+        [0,0,1,0,0]
+      ],
+      land: [
+        [0,1,1,1,0],
+        [1,0,0,0,1],
+        [0,0,0,0,0],
+        [0,1,0,1,0],
+        [0,0,1,0,0]
+      ],
+      warn: [
+        [0,0,0,0,0],
+        [0,1,0,1,0],
+        [0,0,0,0,0],
+        [0,1,0,1,0],
+        [0,0,0,0,0]
+      ]
     };
     
-    // ===== 關卡數據 =====
+    // ===== Level Data =====
     const LEVELS = [
-      {
-        name: '第一關：起飛着陸',
-        hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸',
-        solution: ['drone_takeoff', 'drone_forward', 'drone_forward', 'drone_forward', 'drone_land'],
-        start: { x: -6, z: 0 },
-        goal: { x: 3, z: 0 },
-        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 },
-        obstacles: []
-      },
-      {
-        name: '第二關：轉向前進',
-        hint: '🎯 目標：L 形路線，先前進再左轉，然後着陸\n\n💡 提示：起飛 → 前進 → 左轉 → 前進 → 着陸',
-        solution: ['drone_takeoff', 'drone_forward', 'drone_left_turn', 'drone_forward', 'drone_forward', 'drone_land'],
-        start: { x: -6, z: 4 },
-        goal: { x: -2, z: -4 },
-        cameraPos: { alpha: -Math.PI / 2.5, beta: Math.PI / 3.5, radius: 20 },
-        obstacles: []
-      },
-      {
-        name: '第三關：正方形',
-        hint: '🎯 目標：走正方形路線\n\n💡 提示：前進 → 右轉 × 3（正方形）→ 着陸',
-        solution: ['drone_takeoff', 'drone_forward', 'drone_right_turn', 'drone_forward', 'drone_right_turn', 'drone_forward', 'drone_right_turn', 'drone_forward', 'drone_land'],
-        start: { x: 0, z: 5 },
-        goal: { x: 0, z: 5 },
-        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 4, radius: 22 },
-        obstacles: []
-      },
-      {
-        name: '第四關：長距離',
-        hint: '🎯 目標：穿越整個客廳到終點\n\n💡 提示：使用「重複」積木減少積木數量',
-        solution: ['drone_takeoff', 'drone_repeat', 'drone_forward', 'drone_land'],
-        start: { x: -8, z: 0 },
-        goal: { x: 8, z: 0 },
-        cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 25 },
-        obstacles: [
-          { x: 0, z: 0, w: 1.5, h: 8, color: '#8B4513' }
-        ]
-      },
-      {
-        name: '第五關：迷宮挑戰',
-        hint: '🎯 目標：繞過障礙物到達終點\n\n💡 提示：需要多次轉向來繞過障礙',
-        solution: ['drone_takeoff', 'drone_forward', 'drone_forward', 'drone_left_turn', 'drone_forward', 'drone_forward', 'drone_right_turn', 'drone_forward', 'drone_forward', 'drone_land'],
-        start: { x: -7, z: 5 },
-        goal: { x: 7, z: -5 },
-        cameraPos: { alpha: -Math.PI / 1.8, beta: Math.PI / 3.5, radius: 24 },
-        obstacles: [
-          { x: -3, z: 2, w: 6, h: 1, color: '#654321' },
-          { x: 3, z: -2, w: 6, h: 1, color: '#654321' }
-        ]
-      }
+      { name: '第一關：起飛着陸', hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸', solution: ['drone_takeoff','drone_forward','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 0 }, goal: { x: 3, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }, obstacles: [] },
+      { name: '第二關：轉向前進', hint: '🎯 目標：L 形路線，先前進再左轉，然後着陸\n\n💡 提示：起飛 → 前進 → 左轉 → 前進 → 着陸', solution: ['drone_takeoff','drone_forward','drone_left_turn','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 4 }, goal: { x: -2, z: -4 }, cameraPos: { alpha: -Math.PI / 2.5, beta: Math.PI / 3.5, radius: 20 }, obstacles: [] },
+      { name: '第三關：正方形', hint: '🎯 目標：走正方形路線\n\n💡 提示：前進 → 右轉 × 3（正方形）→ 着陸', solution: ['drone_takeoff','drone_forward','drone_right_turn','drone_forward','drone_right_turn','drone_forward','drone_right_turn','drone_forward','drone_land'], start: { x: 0, z: 5 }, goal: { x: 0, z: 5 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 4, radius: 22 }, obstacles: [] },
+      { name: '第四關：長距離', hint: '🎯 目標：穿越整個客廳到終點\n\n💡 提示：使用「重複」積木減少積木數量', solution: ['drone_takeoff','drone_repeat','drone_forward','drone_land'], start: { x: -8, z: 0 }, goal: { x: 8, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 25 }, obstacles: [{ x: 0, z: 0, w: 1.5, h: 8, color: '#8B4513' }] },
+      { name: '第五關：迷宮挑戰', hint: '🎯 目標：繞過障礙物到達終點\n\n💡 提示：需要多次轉向來繞過障礙', solution: ['drone_takeoff','drone_forward','drone_forward','drone_left_turn','drone_forward','drone_forward','drone_right_turn','drone_forward','drone_forward','drone_land'], start: { x: -7, z: 5 }, goal: { x: 7, z: -5 }, cameraPos: { alpha: -Math.PI / 1.8, beta: Math.PI / 3.5, radius: 24 }, obstacles: [{ x: -3, z: 2, w: 6, h: 1, color: '#654321' }, { x: 3, z: -2, w: 6, h: 1, color: '#654321' }] }
     ];
     
-    // ===== Blockly 積木定義 =====
+    // ===== Blockly Blocks =====
     function defineBlocks() {
-      Blockly.Blocks['drone_takeoff'] = {
-        init: function() {
-          this.appendDummyInput().appendField('🚀 起飛');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4A90D9');
-          this.setTooltip(BLOCK_HELP.drone_takeoff.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_forward'] = {
-        init: function() {
-          this.appendValueInput('STEPS').appendField('⬆️ 前進').setCheck('Number');
-          this.setInputsInline(true);
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4A90D9');
-          this.setTooltip(BLOCK_HELP.drone_forward.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_backward'] = {
-        init: function() {
-          this.appendValueInput('STEPS').appendField('⬇️ 後退').setCheck('Number');
-          this.setInputsInline(true);
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4A90D9');
-          this.setTooltip(BLOCK_HELP.drone_backward.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_left_turn'] = {
-        init: function() {
-          this.appendDummyInput().appendField('↩️ 左轉 90°');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4A90D9');
-          this.setTooltip(BLOCK_HELP.drone_left_turn.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_right_turn'] = {
-        init: function() {
-          this.appendDummyInput().appendField('↪️ 右轉 90°');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4A90D9');
-          this.setTooltip(BLOCK_HELP.drone_right_turn.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_wait'] = {
-        init: function() {
-          this.appendValueInput('SECONDS').appendField('⏱️ 等待').setCheck('Number');
-          this.setInputsInline(true);
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#F5A623');
-          this.setTooltip(BLOCK_HELP.drone_wait.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_repeat'] = {
-        init: function() {
-          this.appendValueInput('TIMES').appendField('🔄 重複').setCheck('Number');
-          this.appendStatementInput('DO');
-          this.setInputsInline(true);
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#F5A623');
-          this.setTooltip(BLOCK_HELP.drone_repeat.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_if'] = {
-        init: function() {
-          this.appendDummyInput().appendField('⚠️ 如果前方有障礙');
-          this.appendStatementInput('DO');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#F5A623');
-          this.setTooltip(BLOCK_HELP.drone_if.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_led_green'] = {
-        init: function() {
-          this.appendDummyInput().appendField('💚 LED 綠');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#9B59B6');
-          this.setTooltip(BLOCK_HELP.drone_led_green.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_led_red'] = {
-        init: function() {
-          this.appendDummyInput().appendField('❤️ LED 紅');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#9B59B6');
-          this.setTooltip(BLOCK_HELP.drone_led_red.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_led_yellow'] = {
-        init: function() {
-          this.appendDummyInput().appendField('💛 LED 黃');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#9B59B6');
-          this.setTooltip(BLOCK_HELP.drone_led_yellow.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_land'] = {
-        init: function() {
-          this.appendDummyInput().appendField('🛬 着陸');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#F56C6C');
-          this.setTooltip(BLOCK_HELP.drone_land.desc);
-        }
-      };
-      
-      Blockly.Blocks['drone_stop'] = {
-        init: function() {
-          this.appendDummyInput().appendField('⏹️ 停止');
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#F56C6C');
-          this.setTooltip(BLOCK_HELP.drone_stop.desc);
-        }
-      };
+      Blockly.Blocks['drone_takeoff'] = { init: function() { this.appendDummyInput().appendField('🚀 起飛'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#4A90D9'); } };
+      Blockly.Blocks['drone_forward'] = { init: function() { this.appendValueInput('STEPS').appendField('⬆️ 前進').setCheck('Number'); this.setInputsInline(true); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#4A90D9'); } };
+      Blockly.Blocks['drone_backward'] = { init: function() { this.appendValueInput('STEPS').appendField('⬇️ 後退').setCheck('Number'); this.setInputsInline(true); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#4A90D9'); } };
+      Blockly.Blocks['drone_left_turn'] = { init: function() { this.appendDummyInput().appendField('↩️ 左轉 90°'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#4A90D9'); } };
+      Blockly.Blocks['drone_right_turn'] = { init: function() { this.appendDummyInput().appendField('↪️ 右轉 90°'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#4A90D9'); } };
+      Blockly.Blocks['drone_wait'] = { init: function() { this.appendValueInput('SECONDS').appendField('⏱️ 等待').setCheck('Number'); this.setInputsInline(true); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#F5A623'); } };
+      Blockly.Blocks['drone_repeat'] = { init: function() { this.appendValueInput('TIMES').appendField('🔄 重複').setCheck('Number'); this.appendStatementInput('DO'); this.setInputsInline(true); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#F5A623'); } };
+      Blockly.Blocks['drone_if'] = { init: function() { this.appendDummyInput().appendField('⚠️ 如果前方有障礙'); this.appendStatementInput('DO'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#F5A623'); } };
+      Blockly.Blocks['drone_led_green'] = { init: function() { this.appendDummyInput().appendField('💚 LED 綠'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#9B59B6'); } };
+      Blockly.Blocks['drone_led_red'] = { init: function() { this.appendDummyInput().appendField('❤️ LED 紅'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#9B59B6'); } };
+      Blockly.Blocks['drone_led_yellow'] = { init: function() { this.appendDummyInput().appendField('💛 LED 黃'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#9B59B6'); } };
+      Blockly.Blocks['drone_land'] = { init: function() { this.appendDummyInput().appendField('🛬 着陸'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#F56C6C'); } };
+      Blockly.Blocks['drone_stop'] = { init: function() { this.appendDummyInput().appendField('⏹️ 停止'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#F56C6C'); } };
     }
     
-    // ===== Babylon.js 初始化 =====
+    // ===== Babylon.js Init =====
     function initBabylon() {
       canvas = document.getElementById('renderCanvas');
       engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, antialias: true });
@@ -714,15 +652,34 @@
       createRoom();
       createDrone();
       createGoal();
+      createEnvironment();
       
-      engine.runRenderLoop(() => scene.render());
+      engine.runRenderLoop(() => {
+        // Animate environment
+        animateEnvironment();
+        
+        // Animate propeller speed
+        propSpeed += (targetPropSpeed - propSpeed) * 0.05;
+        propellers.forEach((prop, i) => {
+          prop.rotation.y += propSpeed * (i % 2 === 0 ? 1 : -1);
+        });
+        
+        // LED breathing animation
+        if (currentLedPattern) {
+          ledAnimationTime += 0.05;
+          const breathe = Math.sin(ledAnimationTime) * 0.3 + 0.7;
+          updateLEDWithIntensity(currentLedPattern, breathe);
+        }
+        
+        scene.render();
+      });
+      
       window.addEventListener('resize', () => engine.resize());
     }
     
     function createRoom() {
       groundMesh = BABYLON.MeshBuilder.CreateGround('floor', { width: 28, height: 20 }, scene);
       const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
-      
       const floorTex = new BABYLON.DynamicTexture('floorTex', { width: 1024, height: 1024 }, scene);
       const ctx = floorTex.getContext();
       ctx.fillStyle = '#8B7355';
@@ -745,7 +702,7 @@
       }
       floorTex.update();
       floorMat.diffuseTexture = floorTex;
-      floorMat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+      floorMat.specularColor = new BABYLON.Color3(0.15, 0.15, 0.15);
       groundMesh.material = floorMat;
       groundMesh.receiveShadows = true;
       
@@ -768,7 +725,7 @@
       rightWall.rotation.y = -Math.PI / 2;
       rightWall.material = wallMat;
       
-      // 家具
+      // Furniture
       const sofa = BABYLON.MeshBuilder.CreateBox('sofa', { width: 5, height: 1.2, depth: 1.8 }, scene);
       sofa.position = new BABYLON.Vector3(-9, 0.6, -6);
       const sofaMat = new BABYLON.StandardMaterial('sofaMat', scene);
@@ -797,19 +754,98 @@
       plantMat.diffuseColor = new BABYLON.Color3(0.15, 0.5, 0.15);
       plant.material = plantMat;
       if (shadowGenerator) shadowGenerator.addShadowCaster(plant);
-      
-      const tvUnit = BABYLON.MeshBuilder.CreateBox('tvUnit', { width: 4, height: 0.8, depth: 0.5 }, scene);
-      tvUnit.position = new BABYLON.Vector3(0, 0.4, -9);
+    }
+    
+    function createEnvironment() {
+      // TV with animated screen
+      const tv = BABYLON.MeshBuilder.CreateBox('tv', { width: 4.5, height: 2.5, depth: 0.3 }, scene);
+      tv.position = new BABYLON.Vector3(0, 1.8, -9.7);
       const tvMat = new BABYLON.StandardMaterial('tvMat', scene);
-      tvMat.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.22);
-      tvUnit.material = tvMat;
-      tvUnit.receiveShadows = true;
+      tvMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.17);
+      tv.material = tvMat;
+      if (shadowGenerator) shadowGenerator.addShadowCaster(tv);
+      
+      tvScreen = BABYLON.MeshBuilder.CreatePlane('tvScreen', { width: 3.8, height: 2 }, scene);
+      tvScreen.position = new BABYLON.Vector3(0, 1.8, -9.55);
+      const screenMat = new BABYLON.StandardMaterial('screenMat', scene);
+      screenMat.diffuseColor = new BABYLON.Color3(0.2, 0.4, 0.8);
+      screenMat.emissiveColor = new BABYLON.Color3(0.1, 0.2, 0.4);
+      tvScreen.material = screenMat;
+      
+      // Clock
+      const clock = BABYLON.MeshBuilder.CreateCylinder('clock', { height: 0.15, diameter: 1 }, scene);
+      clock.position = new BABYLON.Vector3(-6, 5, -9.7);
+      clock.rotation.x = Math.PI / 2;
+      const clockMat = new BABYLON.StandardMaterial('clockMat', scene);
+      clockMat.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.9);
+      clock.material = clockMat;
+      
+      clockHourHand = BABYLON.MeshBuilder.CreateBox('hourHand', { width: 0.05, height: 0.35, depth: 0.05 }, scene);
+      clockHourHand.position = new BABYLON.Vector3(-6, 5, -9.6);
+      const handMat = new BABYLON.StandardMaterial('handMat', scene);
+      handMat.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+      clockHourHand.material = handMat;
+      
+      clockMinuteHand = BABYLON.MeshBuilder.CreateBox('minuteHand', { width: 0.03, height: 0.45, depth: 0.03 }, scene);
+      clockMinuteHand.position = new BABYLON.Vector3(-6, 5, -9.6);
+      clockMinuteHand.material = handMat;
+      
+      // Window with curtains
+      const windowFrame = BABYLON.MeshBuilder.CreateBox('windowFrame', { width: 3.5, height: 2.5, depth: 0.15 }, scene);
+      windowFrame.position = new BABYLON.Vector3(4, 5, -9.7);
+      const windowMat = new BABYLON.StandardMaterial('windowMat', scene);
+      windowMat.diffuseColor = new BABYLON.Color3(0.9, 0.85, 0.7);
+      windowFrame.material = windowMat;
+      
+      const windowGlass = BABYLON.MeshBuilder.CreatePlane('windowGlass', { width: 2.8, height: 1.8 }, scene);
+      windowGlass.position = new BABYLON.Vector3(4, 5, -9.6);
+      const glassMat = new BABYLON.StandardMaterial('glassMat', scene);
+      glassMat.diffuseColor = new BABYLON.Color3(0.5, 0.7, 0.9);
+      glassMat.alpha = 0.5;
+      windowGlass.material = glassMat;
+      
+      // Curtains
+      const curtainMat = new BABYLON.StandardMaterial('curtainMat', scene);
+      curtainMat.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.5);
+      
+      const leftCurtain = BABYLON.MeshBuilder.CreateBox('leftCurtain', { width: 0.6, height: 3, depth: 0.08 }, scene);
+      leftCurtain.position = new BABYLON.Vector3(2.3, 4.5, -9.5);
+      leftCurtain.material = curtainMat;
+      
+      const rightCurtain = BABYLON.MeshBuilder.CreateBox('rightCurtain', { width: 0.6, height: 3, depth: 0.08 }, scene);
+      rightCurtain.position = new BABYLON.Vector3(5.7, 4.5, -9.5);
+      rightCurtain.material = curtainMat;
+    }
+    
+    function animateEnvironment() {
+      // Clock hands rotation
+      const now = new Date();
+      const hours = now.getHours() % 12;
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      
+      const hourAngle = (hours * 30 + minutes * 0.5) * Math.PI / 180;
+      const minuteAngle = (minutes * 6 + seconds * 0.1) * Math.PI / 180;
+      
+      clockHourHand.rotation.y = -hourAngle;
+      clockMinuteHand.rotation.y = -minuteAngle;
+      
+      // TV screen animation (color cycling)
+      if (tvScreen && tvScreen.material) {
+        const t = Date.now() / 1000;
+        const r = Math.sin(t * 0.5) * 0.1 + 0.15;
+        const g = Math.sin(t * 0.7 + 1) * 0.1 + 0.2;
+        const b = Math.sin(t * 0.9 + 2) * 0.1 + 0.4;
+        tvScreen.material.emissiveColor = new BABYLON.Color3(r, g, b);
+      }
     }
     
     function createDrone() {
       droneNode = new BABYLON.TransformNode('drone', scene);
       droneMeshes = [];
+      propellers = [];
       
+      // Body
       const body = BABYLON.MeshBuilder.CreateBox('body', { width: 0.9, height: 0.3, depth: 0.9 }, scene);
       body.parent = droneNode;
       const bodyMat = new BABYLON.StandardMaterial('bodyMat', scene);
@@ -839,16 +875,19 @@
         motor.material = motorMat;
         droneMeshes.push(motor);
         
-        const prop = BABYLON.MeshBuilder.CreateCylinder('prop' + i, { height: 0.03, diameter: 0.6 }, scene);
+        // Propeller
+        const prop = BABYLON.MeshBuilder.CreateCylinder('prop' + i, { height: 0.02, diameter: 0.6 }, scene);
         prop.position = new BABYLON.Vector3(pos.x * 1.1, 0.22, pos.z * 1.1);
         prop.parent = droneNode;
         const propMat = new BABYLON.StandardMaterial('propMat', scene);
-        propMat.diffuseColor = new BABYLON.Color3(0.8, 0.85, 0.9);
-        propMat.alpha = 0.75;
+        propMat.diffuseColor = new BABYLON.Color3(0.6, 0.6, 0.65);
+        propMat.specularColor = new BABYLON.Color3(0.8, 0.8, 0.8);
         prop.material = propMat;
+        propellers.push(prop);
         droneMeshes.push(prop);
       });
       
+      // LED
       const led = BABYLON.MeshBuilder.CreateSphere('led', { diameter: 0.15 }, scene);
       led.position = new BABYLON.Vector3(0, 0.18, -0.5);
       led.parent = droneNode;
@@ -858,17 +897,11 @@
       led.material = ledMat;
       droneMeshes.push(led);
       
-      const cam = BABYLON.MeshBuilder.CreateBox('fpvCam', { width: 0.2, height: 0.1, depth: 0.15 }, scene);
-      cam.position = new BABYLON.Vector3(0, -0.12, -0.3);
-      cam.parent = droneNode;
-      const camMat = new BABYLON.StandardMaterial('camMat', scene);
-      camMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
-      cam.material = camMat;
-      droneMeshes.push(cam);
-      
       droneMeshes.forEach(mesh => {
         if (shadowGenerator) shadowGenerator.addShadowCaster(mesh);
       });
+      
+      updateDroneLEDPattern('idle');
     }
     
     function createGoal() {
@@ -894,17 +927,17 @@
       flagMat.diffuseColor = new BABYLON.Color3(0.95, 0.2, 0.2);
       flagMat.emissiveColor = new BABYLON.Color3(0.3, 0.05, 0.05);
       flag.material = flagMat;
+      
+      updateGoalPosition();
     }
     
     function updateGoalPosition() {
       const level = LEVELS[currentLevel];
       goalMesh.position = new BABYLON.Vector3(level.goal.x, 0.02, level.goal.z);
       
-      // 清除舊障礙物
       obstacles.forEach(o => o.dispose());
       obstacles = [];
       
-      // 添加新障礙物
       level.obstacles.forEach(obs => {
         const box = BABYLON.MeshBuilder.CreateBox('obstacle', { width: obs.w, height: 0.8, depth: obs.h }, scene);
         box.position = new BABYLON.Vector3(obs.x, 0.4, obs.z);
@@ -918,25 +951,54 @@
       });
     }
     
-    // ===== 障礙物碰撞檢測 =====
+    // ===== LED Functions =====
+    function updateDroneLEDPattern(patternName) {
+      currentLedPattern = LED_PATTERNS[patternName] || LED_PATTERNS.idle;
+      updateLEDDisplay(currentLedPattern);
+    }
+    
+    function updateLEDDisplay(pattern) {
+      const pixels = document.querySelectorAll('.led-pixel');
+      pixels.forEach(pixel => {
+        const x = parseInt(pixel.dataset.x);
+        const y = parseInt(pixel.dataset.y);
+        if (pattern[y] && pattern[y][x]) {
+          pixel.classList.add('on');
+        } else {
+          pixel.classList.remove('on');
+        }
+      });
+    }
+    
+    function updateLEDWithIntensity(pattern, intensity) {
+      const pixels = document.querySelectorAll('.led-pixel');
+      pixels.forEach(pixel => {
+        const x = parseInt(pixel.dataset.x);
+        const y = parseInt(pixel.dataset.y);
+        if (pattern[y] && pattern[y][x]) {
+          pixel.classList.add('on');
+          pixel.style.opacity = intensity;
+        } else {
+          pixel.classList.remove('on');
+          pixel.style.opacity = 1;
+        }
+      });
+    }
+    
+    // ===== Collision Detection =====
     function checkCollision(x, z) {
       const level = LEVELS[currentLevel];
       const droneRadius = 0.6;
-      
-      // 檢查牆壁
       if (x < -12 || x > 12 || z < -9 || z > 9) return true;
-      
-      // 檢查障礙物
       for (const obs of level.obstacles) {
         const hw = obs.w / 2 + droneRadius;
         const hd = obs.h / 2 + droneRadius;
         if (Math.abs(x - obs.x) < hw && Math.abs(z - obs.z) < hd) return true;
       }
-      
       return false;
     }
     
-    // ===== 路線軌跡 =====
+    // ===== Trail =====
     function addTrailParticle(x, z) {
       const particle = BABYLON.MeshBuilder.CreateSphere('trail', { diameter: 0.15 }, scene);
       particle.position = new BABYLON.Vector3(x, 0.1, z);
@@ -946,13 +1008,7 @@
       mat.alpha = 0.6;
       particle.material = mat;
       trailParticles.push(particle);
-      
-      // 2秒後消失
-      setTimeout(() => {
-        particle.dispose();
-        const idx = trailParticles.indexOf(particle);
-        if (idx > -1) trailParticles.splice(idx, 1);
-      }, 2000);
+      setTimeout(() => { particle.dispose(); const idx = trailParticles.indexOf(particle); if (idx > -1) trailParticles.splice(idx, 1); }, 2000);
     }
     
     function clearTrail() {
@@ -960,7 +1016,7 @@
       trailParticles = [];
     }
     
-    // ===== 攝影機控制 =====
+    // ===== Camera Controls =====
     function cameraZoom(factor) {
       zoomLevel *= factor;
       zoomLevel = Math.max(40, Math.min(160, zoomLevel));
@@ -985,16 +1041,22 @@
       }
     }
     
-    // ===== Blockly 初始化 =====
+    // ===== Theme Toggle =====
+    function toggleTheme() {
+      isDarkTheme = !isDarkTheme;
+      document.body.style.background = isDarkTheme ? '#0d1421' : '#f0f4f8';
+      document.getElementById('blocklyDiv').style.background = isDarkTheme ? '#0a1220' : '#ffffff';
+      document.querySelector('.top-btn.theme-toggle').textContent = isDarkTheme ? '🌙' : '☀️';
+    }
+    
+    // ===== Blockly Init =====
     let workspace;
     
     function initBlockly() {
       defineBlocks();
       
-      const toolbox = document.getElementById('toolbox');
-      
       workspace = Blockly.inject('blocklyDiv', {
-        toolbox: toolbox,
+        toolbox: document.getElementById('toolbox'),
         scrollbars: true,
         trashcan: true,
         collapse: false,
@@ -1007,9 +1069,9 @@
             workspaceBackgroundColour: '#0a1220',
             toolboxBackgroundColour: '#0d1525',
             toolboxForegroundColour: '#ffffff',
-            flyoutBackgroundColour: '#0d1525',
+            flyoutBackgroundColour: '#1a2535',
             flyoutForegroundColour: '#ffffff',
-            flyoutOpacity: 0.95,
+            flyoutOpacity: 0.98,
             scrollbarColour: '#4A90D9',
             insertionMarkerColour: '#667eea',
             insertionMarkerOpacity: 0.3,
@@ -1024,10 +1086,16 @@
       
       workspace.addChangeListener(updateBlockCount);
       
-      // 積木懸停提示
+      // Snap animation
       workspace.addChangeListener(e => {
-        if (e.type === Blockly.Events.BLOCK_HOVER) {
-          showBlockTooltip(e.blockId);
+        if (e.type === Blockly.Events.BLOCK_MOVE) {
+          const block = workspace.getBlockById(e.blockId);
+          if (block && block.pathObject) {
+            block.pathObject.style.filter = 'drop-shadow(0 0 10px #667eea)';
+            setTimeout(() => {
+              if (block.pathObject) block.pathObject.style.filter = '';
+            }, 200);
+          }
         }
       });
     }
@@ -1040,35 +1108,11 @@
       document.getElementById('block-num').textContent = blockCount;
     }
     
-    function showBlockTooltip(blockId) {
-      const block = workspace.getBlockById(blockId);
-      if (!block) return;
-      
-      const help = BLOCK_HELP[block.type];
-      if (!help) return;
-      
-      const tooltip = document.getElementById('block-tooltip');
-      document.getElementById('tooltip-title').textContent = help.title;
-      document.getElementById('tooltip-desc').textContent = help.desc;
-      
-      // 顯示在積木附近
-      const xy = block.getRelativeToSurfaceXY();
-      tooltip.style.left = (xy.x + 200) + 'px';
-      tooltip.style.top = (xy.y + 100) + 'px';
-      tooltip.classList.add('show');
-      
-      setTimeout(() => tooltip.classList.remove('show'), 2000);
-    }
-    
-    // ===== 執行積木程式 =====
+    // ===== Execute Program =====
     async function runProgram() {
       if (isExecuting) return;
-      
       const allBlocks = workspace.getAllBlocks();
-      if (allBlocks.length === 0) {
-        setStatus('fail', '請先加入積木！');
-        return;
-      }
+      if (allBlocks.length === 0) { setStatus('fail', '請先加入積木！'); return; }
       
       isExecuting = true;
       document.getElementById('run-btn').classList.add('running');
@@ -1077,6 +1121,7 @@
       
       clearTrail();
       resetDroneState();
+      targetPropSpeed = 0.15; // Start propellers spinning
       
       const blocksToExecute = [];
       const visited = new Set();
@@ -1089,8 +1134,7 @@
         if (nextBlock) collectBlocks(nextBlock);
       }
       
-      const topBlocks = workspace.getTopBlocks();
-      topBlocks.forEach(block => collectBlocks(block));
+      workspace.getTopBlocks().forEach(block => collectBlocks(block));
       
       for (const block of blocksToExecute) {
         await executeBlock(block);
@@ -1098,6 +1142,7 @@
       }
       
       isExecuting = false;
+      targetPropSpeed = 0; // Stop propellers
       document.getElementById('run-btn').classList.remove('running');
       document.getElementById('run-btn').disabled = false;
       
@@ -1112,7 +1157,9 @@
       droneY = 0.5;
       droneDirection = 0;
       isFlying = false;
+      targetPropSpeed = 0;
       updateDroneUI('😴', '待機');
+      updateDroneLEDPattern('idle');
     }
     
     async function executeBlock(block) {
@@ -1126,61 +1173,35 @@
         case 'drone_forward':
         case 'drone_backward':
           const stepsBlock = block.getInput('STEPS')?.connection?.targetBlock();
-          if (stepsBlock?.getFieldValue) {
-            steps = Math.max(1, Math.min(10, parseInt(stepsBlock.getFieldValue('NUM')) || 1));
-          }
+          if (stepsBlock?.getFieldValue) steps = Math.max(1, Math.min(10, parseInt(stepsBlock.getFieldValue('NUM')) || 1));
           break;
         case 'drone_wait':
           const secBlock = block.getInput('SECONDS')?.connection?.targetBlock();
-          if (secBlock?.getFieldValue) {
-            seconds = Math.max(0.5, Math.min(5, parseFloat(secBlock.getFieldValue('NUM')) || 1));
-          }
+          if (secBlock?.getFieldValue) seconds = Math.max(0.5, Math.min(5, parseFloat(secBlock.getFieldValue('NUM')) || 1));
           break;
         case 'drone_repeat':
           const timesBlock = block.getInput('TIMES')?.connection?.targetBlock();
-          if (timesBlock?.getFieldValue) {
-            steps = Math.max(1, Math.min(10, parseInt(timesBlock.getFieldValue('NUM')) || 1));
-          }
+          if (timesBlock?.getFieldValue) steps = Math.max(1, Math.min(10, parseInt(timesBlock.getFieldValue('NUM')) || 1));
           break;
       }
       
       switch (type) {
-        case 'drone_takeoff':
-          await animateTakeoff();
-          break;
+        case 'drone_takeoff': await animateTakeoff(); break;
         case 'drone_forward':
-          for (let i = 0; i < steps; i++) {
-            await animateMove(1);
-          }
+          for (let i = 0; i < steps; i++) { await animateMove(1); }
           break;
         case 'drone_backward':
-          for (let i = 0; i < steps; i++) {
-            await animateMove(-1);
-          }
+          for (let i = 0; i < steps; i++) { await animateMove(-1); }
           break;
-        case 'drone_left_turn':
-          await animateTurn(-90);
-          break;
-        case 'drone_right_turn':
-          await animateTurn(90);
-          break;
-        case 'drone_wait':
-          await delay(seconds * 500);
-          break;
-        case 'drone_land':
-          await animateLand();
-          break;
+        case 'drone_left_turn': await animateTurn(-90); updateDroneLEDPattern('left'); break;
+        case 'drone_right_turn': await animateTurn(90); updateDroneLEDPattern('right'); break;
+        case 'drone_wait': await delay(seconds * 500); break;
+        case 'drone_land': await animateLand(); break;
         case 'drone_repeat':
           const childBlock = block.getInput('DO')?.connection?.targetBlock();
-          if (childBlock) {
-            for (let i = 0; i < steps; i++) {
-              await executeBlock(childBlock);
-              if (!isExecuting) break;
-            }
-          }
+          if (childBlock) { for (let i = 0; i < steps; i++) { await executeBlock(childBlock); if (!isExecuting) break; } }
           break;
         case 'drone_if':
-          // 檢查前方是否有障礙
           const rad = droneDirection * Math.PI / 180;
           const nextX = dronePos.x + Math.cos(rad) * 2;
           const nextZ = dronePos.z + Math.sin(rad) * 2;
@@ -1189,18 +1210,10 @@
             if (childBlock) await executeBlock(childBlock);
           }
           break;
-        case 'drone_led_green':
-          setLEDColor(0.2, 0.9, 0.3);
-          break;
-        case 'drone_led_red':
-          setLEDColor(0.9, 0.2, 0.2);
-          break;
-        case 'drone_led_yellow':
-          setLEDColor(0.9, 0.9, 0.2);
-          break;
-        case 'drone_stop':
-          isExecuting = false;
-          break;
+        case 'drone_led_green': setLEDColor(0.2, 0.9, 0.3); updateDroneLEDPattern('happy'); break;
+        case 'drone_led_red': setLEDColor(0.9, 0.2, 0.2); updateDroneLEDPattern('warn'); break;
+        case 'drone_led_yellow': setLEDColor(0.9, 0.9, 0.2); updateDroneLEDPattern('happy'); break;
+        case 'drone_stop': isExecuting = false; break;
       }
       
       updatePositionHUD();
@@ -1209,7 +1222,9 @@
     async function animateTakeoff() {
       if (!isFlying) {
         isFlying = true;
+        targetPropSpeed = 0.25; // Faster spin for takeoff
         updateDroneUI('😀', '起飛中');
+        updateDroneLEDPattern('forward');
         createParticleEffect(droneNode.position.x, droneNode.position.z, 'takeoff');
         
         const startY = droneY;
@@ -1223,10 +1238,10 @@
             const eased = 1 - Math.pow(1 - t, 3);
             droneY = startY + (targetY - startY) * eased;
             droneNode.position.y = droneY;
-            droneNode.rotation.x = Math.sin(t * 20) * 0.015;
-            droneNode.rotation.z = Math.cos(t * 15) * 0.015;
+            droneNode.rotation.x = Math.sin(t * 20) * 0.02;
+            droneNode.rotation.z = Math.cos(t * 15) * 0.02;
             if (t < 1) requestAnimationFrame(animate);
-            else { droneNode.rotation = BABYLON.Vector3.Zero(); resolve(); }
+            else { droneNode.rotation = BABYLON.Vector3.Zero(); targetPropSpeed = 0.15; resolve(); }
           }
           animate();
         });
@@ -1237,6 +1252,7 @@
       if (!isFlying) await animateTakeoff();
       
       updateDroneUI('😎', '移動中');
+      updateDroneLEDPattern('forward');
       
       const rad = droneDirection * Math.PI / 180;
       const dx = Math.cos(rad) * dir * 1.5;
@@ -1245,12 +1261,13 @@
       const targetX = dronePos.x + dx;
       const targetZ = dronePos.z + dz;
       
-      // 碰撞檢測
       if (checkCollision(targetX, targetZ)) {
         updateDroneUI('😱', '撞到了！');
+        updateDroneLEDPattern('warn');
         setStatus('fail', '💥 撞到障礙物！');
         playFailSound();
         isExecuting = false;
+        targetPropSpeed = 0;
         return;
       }
       
@@ -1267,10 +1284,7 @@
           dronePos.z = startZ + (targetZ - startZ) * eased;
           droneNode.position.x = dronePos.x;
           droneNode.position.z = dronePos.z;
-          
-          // 添加軌跡
           addTrailParticle(dronePos.x, dronePos.z);
-          
           if (t < 1) requestAnimationFrame(animate);
           else { dronePos.x = targetX; dronePos.z = targetZ; resolve(); }
         }
@@ -1283,7 +1297,6 @@
       
       updateDroneUI('😉', '轉向中');
       
-      const startRot = droneDirection;
       const targetRot = (droneDirection + angle + 360) % 360;
       const startYRot = droneNode.rotation.y;
       const targetYRot = angle * Math.PI / 180;
@@ -1304,7 +1317,9 @@
     
     async function animateLand() {
       isFlying = false;
+      targetPropSpeed = 0.1; // Slow down for landing
       updateDroneUI('🥰', '降落中');
+      updateDroneLEDPattern('land');
       createParticleEffect(droneNode.position.x, droneNode.position.z, 'land');
       
       const startY = droneY;
@@ -1319,13 +1334,12 @@
           droneY = startY + (targetY - startY) * eased;
           droneNode.position.y = droneY;
           if (t < 1) requestAnimationFrame(animate);
-          else { droneY = targetY; droneNode.position.y = targetY; resolve(); }
+          else { droneY = targetY; droneNode.position.y = targetY; targetPropSpeed = 0; resolve(); }
         }
         animate();
       });
     }
     
-    // ===== 粒子效果 =====
     function createParticleEffect(x, z, type) {
       const particleSystem = new BABYLON.ParticleSystem('particles', 30, scene);
       particleSystem.particleTexture = new BABYLON.Texture('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGklEQVQYV2NkYGD4z4AHMDLQAowMowAy0w8DAJbNAwU7lNqCAAAAAElFTkSuQmCC', scene);
@@ -1379,34 +1393,17 @@
     
     function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
     
-    // ===== UI 更新 =====
-    function updateDroneUI(expr, text) {
-      document.getElementById('drone-state').textContent = `${expr} ${text}`;
-    }
-    
-    function updatePositionHUD() {
-      document.getElementById('pos-x').textContent = dronePos.x.toFixed(1);
-      document.getElementById('pos-z').textContent = dronePos.z.toFixed(1);
-    }
-    
-    function setStatus(type, msg) {
-      const badge = document.getElementById('status-badge');
-      badge.className = type;
-      badge.textContent = msg;
-    }
+    // ===== UI Functions =====
+    function updateDroneUI(expr, text) { document.getElementById('drone-state').textContent = `${expr} ${text}`; }
+    function updatePositionHUD() { document.getElementById('pos-x').textContent = dronePos.x.toFixed(1); document.getElementById('pos-z').textContent = dronePos.z.toFixed(1); }
+    function setStatus(type, msg) { const badge = document.getElementById('status-badge'); badge.className = type; badge.textContent = msg; }
     
     function checkGoal() {
       const level = LEVELS[currentLevel];
       const dx = Math.abs(dronePos.x - level.goal.x);
       const dz = Math.abs(dronePos.z - level.goal.z);
-      
-      if (dx < 1.8 && dz < 1.8) {
-        showWin();
-      } else if (isExecuting === false && !droneFlying) {
-        // 已着陸但未到終點
-        setStatus('fail', '❌ 着陸了但未到終點！');
-        playFailSound();
-      }
+      if (dx < 1.8 && dz < 1.8) showWin();
+      else if (!isFlying) { setStatus('fail', '❌ 着陸了但未到終點！'); playFailSound(); }
     }
     
     function showWin() {
@@ -1427,40 +1424,15 @@
     
     function playSuccessSound() {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      [523, 659, 784, 1047].forEach((f, i) => {
-        setTimeout(() => {
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.connect(g);
-          g.connect(ctx.destination);
-          o.frequency.value = f;
-          g.gain.setValueAtTime(0.1, ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-          o.start();
-          o.stop(ctx.currentTime + 0.3);
-        }, i * 130);
-      });
+      [523, 659, 784, 1047].forEach((f, i) => { setTimeout(() => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = f; g.gain.setValueAtTime(0.1, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3); o.start(); o.stop(ctx.currentTime + 0.3); }, i * 130); });
     }
     
     function playFailSound() {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      [300, 200].forEach((f, i) => {
-        setTimeout(() => {
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.connect(g);
-          g.connect(ctx.destination);
-          o.frequency.value = f;
-          o.type = 'square';
-          g.gain.setValueAtTime(0.08, ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-          o.start();
-          o.stop(ctx.currentTime + 0.2);
-        }, i * 100);
-      });
+      [300, 200].forEach((f, i) => { setTimeout(() => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = f; o.type = 'square'; g.gain.setValueAtTime(0.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2); o.start(); o.stop(ctx.currentTime + 0.2); }, i * 100); });
     }
     
-    // ===== 關卡控制 =====
+    // ===== Level Functions =====
     function loadLevel(index) {
       currentLevel = index;
       const level = LEVELS[index];
@@ -1469,7 +1441,6 @@
       document.getElementById('level-indicator').textContent = `Level ${index + 1} / ${LEVELS.length}`;
       
       updateLevelButtons();
-      
       clearTrail();
       resetDroneState();
       droneNode.position = new BABYLON.Vector3(level.start.x, 0.5, level.start.z);
@@ -1480,8 +1451,8 @@
       updatePositionHUD();
       
       workspace.clear();
-      
       setStatus('ready', '準備就緒');
+      updateDroneLEDPattern('idle');
     }
     
     function updateLevelButtons() {
@@ -1496,11 +1467,8 @@
     
     function nextLevel() {
       document.getElementById('win-modal').classList.remove('show');
-      if (currentLevel < LEVELS.length - 1) {
-        loadLevel(currentLevel + 1);
-      } else {
-        loadLevel(0);
-      }
+      if (currentLevel < LEVELS.length - 1) loadLevel(currentLevel + 1);
+      else loadLevel(0);
     }
     
     function replayLevel() {
@@ -1509,14 +1477,8 @@
       resetDroneState();
     }
     
-    function resetScene() {
-      clearTrail();
-      loadLevel(currentLevel);
-    }
-    
-    function clearBlocks() {
-      workspace.clear();
-    }
+    function resetScene() { clearTrail(); loadLevel(currentLevel); }
+    function clearBlocks() { workspace.clear(); }
     
     function showHint() {
       const level = LEVELS[currentLevel];
@@ -1528,37 +1490,18 @@
     
     function showSolution() {
       const level = LEVELS[currentLevel];
-      const solution = level.solution;
-      
       if (confirm('確定要載入解答範例嗎？')) {
         workspace.clear();
-        
         const blocks = {};
-        solution.forEach((type, i) => {
+        level.solution.forEach((type, i) => {
           const block = workspace.newBlock(type);
           block.initSvg();
           block.render();
-          
-          // 設置參數值
-          if (type === 'drone_forward' || type === 'drone_backward') {
-            const input = block.getInput('STEPS');
-            const shadow = input.connection.targetBlock();
-            if (shadow) shadow.setFieldValue('1', 'NUM');
-          }
-          if (type === 'drone_repeat') {
-            const input = block.getInput('TIMES');
-            const shadow = input.connection.targetBlock();
-            if (shadow) shadow.setFieldValue('4', 'NUM');
-          }
-          
           blocks[i] = block;
         });
-        
-        // 連接積木
-        for (let i = 0; i < solution.length - 1; i++) {
+        for (let i = 0; i < level.solution.length - 1; i++) {
           blocks[i].nextConnection.connect(blocks[i + 1].previousConnection);
         }
-        
         updateBlockCount();
         setStatus('ready', '已載入解答');
       }
@@ -1567,9 +1510,7 @@
     document.querySelectorAll('.level-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const level = parseInt(btn.dataset.level) - 1;
-        if (!isNaN(level) && !btn.classList.contains('locked')) {
-          loadLevel(level);
-        }
+        if (!isNaN(level) && !btn.classList.contains('locked')) loadLevel(level);
       });
     });
     
