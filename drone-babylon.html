@@ -1099,8 +1099,8 @@
     async function runProgram() {
       if (isExecuting) return;
       
-      const topBlocks = workspace.getTopBlocks();
-      if (topBlocks.length === 0) {
+      const allBlocks = workspace.getAllBlocks();
+      if (allBlocks.length === 0) {
         setStatus('fail', '請先加入積木！');
         return;
       }
@@ -1112,7 +1112,27 @@
       
       resetDroneState();
       
-      for (const block of topBlocks) {
+      // 收集所有積木並按順序執行
+      const blocksToExecute = [];
+      const visited = new Set();
+      
+      // 按順序遍歷所有積木（跟隨連接鏈）
+      function collectBlocks(block) {
+        if (!block || visited.has(block.id)) return;
+        visited.add(block.id);
+        blocksToExecute.push(block);
+        
+        // 檢查下一個連接的積木
+        const nextBlock = block.getNextBlock();
+        if (nextBlock) collectBlocks(nextBlock);
+      }
+      
+      // 從每個頂部積木開始收集
+      const topBlocks = workspace.getTopBlocks();
+      topBlocks.forEach(block => collectBlocks(block));
+      
+      // 執行所有積木
+      for (const block of blocksToExecute) {
         await executeBlock(block);
       }
       
