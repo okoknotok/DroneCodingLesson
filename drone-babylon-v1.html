@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚁 無人機指令營 — 專業版</title>
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/blockly@10.0.0/blockly.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --motion-blue: #4A90D9;
+      --control-orange: #F5A623;
+      --event-yellow: #F8E71C;
+      --end-red: #F56C6C;
+      --bg-dark: #1a1a2e;
+      --bg-panel: #0f1729;
+      --accent: #667eea;
+      --success: #50C878;
+    }
+    
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+    
+    /* ===== 頂部 bar ===== */
+    #top-bar {
+      height: 60px;
+      background: linear-gradient(135deg, var(--accent) 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      color: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    #level-title { font-size: 22px; font-weight: 800; }
+    #top-btns { display: flex; gap: 12px; }
+    .top-btn {
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 20px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .top-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
+    
+    /* ===== 主內容 ===== */
+    #main-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    
+    /* ===== 左邊：3D 舞台 ===== */
+    #stage-panel {
+      flex: 1.2;
+      background: #0a1628;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    
+    #stage-header {
+      padding: 12px 20px;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    #stage-header h3 {
+      color: var(--motion-blue);
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #zoom-controls { display: flex; gap: 6px; }
+    .zoom-btn {
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,0.08);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .zoom-btn:hover { background: rgba(255,255,255,0.18); }
+    #zoom-label { color: #666; font-size: 12px; line-height: 34px; padding: 0 8px; }
+    
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    #renderCanvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      outline: none;
+    }
+    
+    /* 疊加 UI */
+    #stage-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+    .overlay-card {
+      background: rgba(15, 23, 41, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: white;
+      font-size: 13px;
+    }
+    .overlay-card .label { color: #888; font-size: 11px; margin-bottom: 2px; }
+    .overlay-card .value { font-size: 16px; font-weight: 700; }
+    .overlay-card.success { border-color: var(--success); }
+    .overlay-card.success .value { color: var(--success); }
+    
+    #goal-marker {
+      position: absolute;
+      padding: 8px 14px;
+      background: rgba(67, 160, 71, 0.9);
+      border-radius: 20px;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: goalPulse 1.5s infinite;
+      box-shadow: 0 4px 15px rgba(67, 160, 71, 0.4);
+    }
+    @keyframes goalPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    /* 過關彈窗 */
+    #win-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    #win-modal.show { display: flex; }
+    #win-modal .stars { font-size: 60px; margin-bottom: 15px; animation: starBounce 0.6s ease-out; }
+    @keyframes starBounce {
+      0% { transform: scale(0) rotate(-20deg); }
+      60% { transform: scale(1.2) rotate(10deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    #win-modal h2 { color: white; font-size: 36px; margin-bottom: 8px; }
+    #win-modal p { color: #aaa; font-size: 18px; margin-bottom: 25px; }
+    #next-level-btn {
+      padding: 14px 40px;
+      background: linear-gradient(135deg, var(--accent), #764ba2);
+      border: none;
+      border-radius: 30px;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    #next-level-btn:hover { transform: scale(1.05); }
+    
+    /* 提示 */
+    #hint-toast {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(102, 126, 234, 0.95);
+      padding: 14px 24px;
+      border-radius: 14px;
+      color: white;
+      font-size: 15px;
+      max-width: 380px;
+      text-align: center;
+      display: none;
+      z-index: 50;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+      line-height: 1.5;
+    }
+    #hint-toast.show { display: block; }
+    
+    /* ===== 右邊：積木編程 ===== */
+    #blockly-panel {
+      width: 420px;
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+      border-left: 2px solid rgba(255,255,255,0.05);
+    }
+    
+    #blockly-header {
+      padding: 14px 18px;
+      background: rgba(0,0,0,0.25);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #blockly-header h3 { color: var(--accent); font-size: 16px; }
+    #run-btn {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #50C878, #3cb371);
+      border: none;
+      border-radius: 20px;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(80, 200, 120, 0.35);
+    }
+    #run-btn:hover { transform: scale(1.04); }
+    #run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    #blockly-container {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Blockly 客製化 CSS */
+    .blocklyToolboxDiv {
+      background: rgba(15, 23, 41, 0.98) !important;
+    }
+    .blocklyTreeRoot {
+      padding: 8px !important;
+    }
+    .blocklyTreeRow {
+      padding: 8px 12px !important;
+      border-radius: 8px !important;
+      margin: 4px 0 !important;
+    }
+    .blocklyTreeRow:hover {
+      background: rgba(255,255,255,0.08) !important;
+    }
+    
+    /* 狀態列 */
+    #status-bar {
+      padding: 10px 18px;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    #block-count { color: #888; font-size: 13px; }
+    #level-info { color: #666; font-size: 12px; }
+    #status-msg {
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+    #status-msg.ready { background: rgba(74, 144, 217, 0.2); color: #4A90D9; }
+    #status-msg.running { background: rgba(245, 166, 35, 0.2); color: #F5A623; }
+    #status-msg.success { background: rgba(80, 200, 120, 0.2); color: #50C878; }
+    #status-msg.fail { background: rgba(245, 108, 108, 0.2); color: #F56C6C; }
+    
+    /* Blockly 樣式調整 */
+    .blocklyFlyoutBackground {
+      fill: rgba(20, 30, 50, 0.98) !important;
+    }
+    .blocklyMainBackground {
+      fill: transparent !important;
+    }
+    .blocklyScrollbarBackground {
+      fill: rgba(255,255,255,0.05) !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- 頂部 bar -->
+  <div id="top-bar">
+    <div id="level-title">🏠 第一關：客廳任務</div>
+    <div id="top-btns">
+      <button class="top-btn" onclick="showHint()">💡 提示</button>
+      <button class="top-btn" onclick="resetLevel()">🔄 重置</button>
+    </div>
+  </div>
+  
+  <div id="main-content">
+    <!-- 左邊：3D 舞台 -->
+    <div id="stage-panel">
+      <div id="stage-header">
+        <h3>🎮 3D 遊戲舞台 <span id="zoom-label">100%</span></h3>
+        <div id="zoom-controls">
+          <button class="zoom-btn" onclick="cameraZoom(1.15)">＋</button>
+          <button class="zoom-btn" onclick="cameraZoom(0.85)">－</button>
+          <button class="zoom-btn" onclick="resetCamera()">⟲</button>
+        </div>
+      </div>
+      
+      <div id="canvas-container">
+        <canvas id="renderCanvas"></canvas>
+        
+        <!-- 疊加 UI -->
+        <div id="stage-overlay">
+          <div class="overlay-card" id="drone-status">
+            <div class="label">無人機狀態</div>
+            <div class="value" id="drone-expr">😴 待機</div>
+          </div>
+          <div class="overlay-card" id="level-progress">
+            <div class="label">進度</div>
+            <div class="value" id="progress-text">0 / 3</div>
+          </div>
+        </div>
+        
+        <div id="goal-marker" style="display:none;">🏁 終點</div>
+        
+        <!-- 過關彈窗 -->
+        <div id="win-modal">
+          <div class="stars">⭐⭐⭐</div>
+          <h2 id="win-title">過關了！</h2>
+          <p id="win-msg">太棒了！準備好挑戰下一關？</p>
+          <button id="next-level-btn" onclick="nextLevel()">下一關 →</button>
+        </div>
+        
+        <div id="hint-toast"></div>
+      </div>
+    </div>
+    
+    <!-- 右邊：Blockly 積木 -->
+    <div id="blockly-panel">
+      <div id="blockly-header">
+        <h3>🧩 積木程式</h3>
+        <button id="run-btn" onclick="runProgram()">▶ 執行</button>
+      </div>
+      
+      <div id="blockly-container">
+        <div id="blocklyDiv" style="width: 100%; height: 100%;"></div>
+      </div>
+      
+      <div id="status-bar">
+        <span id="block-count">0 個積木</span>
+        <span id="level-info">Level 1 / 3</span>
+        <span id="status-msg" class="ready">準備就緒</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blockly 工具箱定義 -->
+  <xml id="toolbox" style="display: none">
+    <block type="drone_takeoff"></block>
+    <block type="drone_forward"></block>
+    <block type="drone_backward"></block>
+    <block type="drone_left"></block>
+    <block type="drone_right"></block>
+    <block type="drone_wait"></block>
+    <block type="drone_land"></block>
+    <block type="controls_repeat"></block>
+  </xml>
+
+  <script>
+    // ===== Babylon.js 3D 場景 =====
+    let canvas, engine, scene, camera;
+    let drone, droneBody;
+    let ground, goalMarker;
+    let isSceneReady = false;
+    
+    // 遊戲狀態
+    let dronePos = new BABYLON.Vector3(0, 0, 0);
+    let droneDirection = 0; // 0=+Z, 90=+X, 180=-Z, 270=-X
+    let droneFlying = false;
+    let isExecuting = false;
+    let zoomLevel = 100;
+    
+    // 關卡數據
+    const LEVELS = [
+      {
+        name: "第一關：客廳任務",
+        hint: "🎯 目標：操控無人機到達 🏁 終點！\n\n👉 積木：起飛 → 前進 × 4 → 着陸",
+        start: { x: -7, z: 3 },
+        goal: { x: 7, z: 3 },
+        obstacles: []
+      },
+      {
+        name: "第二關：繞過障礙",
+        hint: "⚠️ 前面有障礙物！需要轉向繞路\n\n💡 先左轉，前進，再右轉",
+        start: { x: -7, z: 3 },
+        goal: { x: 7, z: -3 },
+        obstacles: [{ x: 0, z: 3, w: 2, h: 6 }]
+      },
+      {
+        name: "第三關：長距離挑戰",
+        hint: "🏁 終點比較遠，要用更多前進積木！\n\n💡 可以用「重複」積木減少積木數量",
+        start: { x: -8, z: 0 },
+        goal: { x: 8, z: 0 },
+        obstacles: []
+      }
+    ];
+    let currentLevel = 0;
+    
+    // 初始化 Babylon.js
+    function initBabylon() {
+      canvas = document.getElementById('renderCanvas');
+      engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+      
+      scene = new BABYLON.Scene(engine);
+      scene.clearColor = new BABYLON.Color4(0.04, 0.08, 0.15, 1);
+      
+      // 攝影機
+      camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 3, 20, BABYLON.Vector3.Zero(), scene);
+      camera.attachControl(canvas, true);
+      camera.lowerRadiusLimit = 10;
+      camera.upperRadiusLimit = 40;
+      camera.lowerBetaLimit = 0.3;
+      camera.upperBetaLimit = Math.PI / 2.2;
+      camera.wheelPrecision = 20;
+      
+      // 燈光
+      const hemi = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, 1, 0), scene);
+      hemi.intensity = 0.6;
+      hemi.groundColor = new BABYLON.Color3(0.2, 0.2, 0.3);
+      
+      const dir = new BABYLON.DirectionalLight("dir", new BABYLON.Vector3(-1, -2, -1), scene);
+      dir.intensity = 0.8;
+      dir.position = new BABYLON.Vector3(10, 20, 10);
+      
+      // 建立場景
+      createLivingRoom();
+      createDrone();
+      createGoal();
+      
+      // 陰影
+      const shadowGen = new BABYLON.ShadowGenerator(1024, dir);
+      shadowGen.useBlurExponentialShadowMap = true;
+      shadowGen.blurKernel = 32;
+      shadowGen.addShadowCaster(drone);
+      
+      isSceneReady = true;
+      
+      // 渲染循環
+      engine.runRenderLoop(() => scene.render());
+      
+      // 視窗調整
+      window.addEventListener('resize', () => engine.resize());
+    }
+    
+    // 建立客厅場景
+    function createLivingRoom() {
+      // 地板
+      ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 24, height: 16 }, scene);
+      const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+      groundMat.diffuseColor = new BABYLON.Color3(0.55, 0.45, 0.35);
+      groundMat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+      ground.material = groundMat;
+      ground.receiveShadows = true;
+      
+      // 地板格仔紋理
+      const gridTex = new BABYLON.DynamicTexture("grid", { width: 512, height: 512 }, scene);
+      const ctx = gridTex.getContext();
+      ctx.fillStyle = "#8B7355";
+      ctx.fillRect(0, 0, 512, 512);
+      ctx.strokeStyle = "#9a8465";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 12; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * 42, 0);
+        ctx.lineTo(i * 42, 512);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i * 42);
+        ctx.lineTo(512, i * 42);
+        ctx.stroke();
+      }
+      gridTex.update();
+      groundMat.diffuseTexture = gridTex;
+      
+      // 牆壁（透明但有邊線）
+      const wallMat = new BABYLON.StandardMaterial("wallMat", scene);
+      wallMat.diffuseColor = new BABYLON.Color3(0.53, 0.81, 0.92);
+      wallMat.alpha = 0.3;
+      wallMat.backFaceCulling = false;
+      
+      // 後牆
+      const backWall = BABYLON.MeshBuilder.CreatePlane("backWall", { width: 24, height: 8 }, scene);
+      backWall.position = new BABYLON.Vector3(0, 4, -8);
+      backWall.material = wallMat;
+      
+      // 左牆
+      const leftWall = BABYLON.MeshBuilder.CreatePlane("leftWall", { width: 16, height: 8 }, scene);
+      leftWall.position = new BABYLON.Vector3(-12, 4, 0);
+      leftWall.rotation.y = Math.PI / 2;
+      leftWall.material = wallMat;
+      
+      // 右牆
+      const rightWall = BABYLON.MeshBuilder.CreatePlane("rightWall", { width: 16, height: 8 }, scene);
+      rightWall.position = new BABYLON.Vector3(12, 4, 0);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.material = wallMat;
+      
+      // 家具 - 梳化
+      const sofa = BABYLON.MeshBuilder.CreateBox("sofa", { width: 4, height: 1.2, depth: 1.5 }, scene);
+      sofa.position = new BABYLON.Vector3(-8, 0.6, -5);
+      const sofaMat = new BABYLON.StandardMaterial("sofaMat", scene);
+      sofaMat.diffuseColor = new BABYLON.Color3(0.8, 0.5, 0.3);
+      sofa.material = sofaMat;
+      sofa.receiveShadows = true;
+      
+      // 茶几
+      const table = BABYLON.MeshBuilder.CreateBox("table", { width: 2.5, height: 0.8, depth: 1.2 }, scene);
+      table.position = new BABYLON.Vector3(6, 0.4, -5);
+      const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
+      tableMat.diffuseColor = new BABYLON.Color3(0.6, 0.4, 0.25);
+      table.material = tableMat;
+      table.receiveShadows = true;
+      
+      // 盆栽
+      const plant = BABYLON.MeshBuilder.CreateCylinder("plant", { height: 1.5, diameterTop: 0.8, diameterBottom: 0.6 }, scene);
+      plant.position = new BABYLON.Vector3(-4, 0.75, -5);
+      const plantMat = new BABYLON.StandardMaterial("plantMat", scene);
+      plantMat.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.2);
+      plant.material = plantMat;
+      
+      // 牆壁裝飾 - 畫框
+      const frame = BABYLON.MeshBuilder.CreatePlane("frame", { width: 2, height: 1.5 }, scene);
+      frame.position = new BABYLON.Vector3(-6, 4, -7.9);
+      const frameMat = new BABYLON.StandardMaterial("frameMat", scene);
+      frameMat.diffuseColor = new BABYLON.Color3(0.9, 0.7, 0.6);
+      frame.material = frameMat;
+      
+      // 時鐘
+      const clock = BABYLON.MeshBuilder.CreateCylinder("clock", { height: 0.1, diameter: 1.2 }, scene);
+      clock.position = new BABYLON.Vector3(0, 5, -7.9);
+      const clockMat = new BABYLON.StandardMaterial("clockMat", scene);
+      clockMat.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.95);
+      clock.material = clockMat;
+      
+      // 窗戶
+      const windowMesh = BABYLON.MeshBuilder.CreatePlane("window", { width: 3, height: 2.5 }, scene);
+      windowMesh.position = new BABYLON.Vector3(4, 4, -7.9);
+      const windowMat = new BABYLON.StandardMaterial("windowMat", scene);
+      windowMat.diffuseColor = new BABYLON.Color3(0.6, 0.8, 0.95);
+      windowMat.alpha = 0.6;
+      windowMesh.material = windowMat;
+      
+      // 窗框
+      const frameTop = BABYLON.MeshBuilder.CreateBox("frameTop", { width: 3.2, height: 0.1, depth: 0.1 }, scene);
+      frameTop.position = new BABYLON.Vector3(4, 5.2, -7.85);
+      const frameMat2 = new BABYLON.StandardMaterial("frameMat2", scene);
+      frameMat2.diffuseColor = new BABYLON.Color3(0.4, 0.25, 0.15);
+      frameTop.material = frameMat2;
+    }
+    
+    // 建立無人機
+    function createDrone() {
+      // 無人機群組
+      drone = new BABYLON.TransformNode("drone", scene);
+      
+      // 主體
+      droneBody = BABYLON.MeshBuilder.CreateBox("droneBody", { width: 0.8, height: 0.25, depth: 0.8 }, scene);
+      droneBody.parent = drone;
+      const bodyMat = new BABYLON.StandardMaterial("bodyMat", scene);
+      bodyMat.diffuseColor = new BABYLON.Color3(0.3, 0.5, 0.7);
+      bodyMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+      droneBody.material = bodyMat;
+      
+      // 四個臂
+      const armMat = new BABYLON.StandardMaterial("armMat", scene);
+      armMat.diffuseColor = new BABYLON.Color3(0.2, 0.25, 0.3);
+      
+      const armPositions = [
+        { x: 0.6, z: 0.6 },
+        { x: -0.6, z: 0.6 },
+        { x: 0.6, z: -0.6 },
+        { x: -0.6, z: -0.6 }
+      ];
+      
+      armPositions.forEach((pos, i) => {
+        const arm = BABYLON.MeshBuilder.CreateBox("arm" + i, { width: 0.12, height: 0.08, depth: 0.6 }, scene);
+        arm.position = new BABYLON.Vector3(pos.x * 0.8, 0, pos.z * 0.8);
+        arm.rotation.y = Math.atan2(pos.x, pos.z);
+        arm.parent = drone;
+        arm.material = armMat;
+        
+        // 螺旋槳
+        const prop = BABYLON.MeshBuilder.CreateCylinder("prop" + i, { height: 0.03, diameter: 0.5 }, scene);
+        prop.position = new BABYLON.Vector3(pos.x, 0.1, pos.z);
+        prop.parent = drone;
+        const propMat = new BABYLON.StandardMaterial("propMat", scene);
+        propMat.diffuseColor = new BABYLON.Color3(0.85, 0.9, 0.95);
+        propMat.alpha = 0.7;
+        prop.material = propMat;
+      });
+      
+      // LED 燈（無人機前方）
+      const led = BABYLON.MeshBuilder.CreateSphere("led", { diameter: 0.12 }, scene);
+      led.position = new BABYLON.Vector3(0, 0.15, -0.4);
+      led.parent = drone;
+      const ledMat = new BABYLON.StandardMaterial("ledMat", scene);
+      ledMat.diffuseColor = new BABYLON.Color3(0.2, 0.9, 0.3);
+      ledMat.emissiveColor = new BABYLON.Color3(0.2, 0.9, 0.3);
+      led.material = ledMat;
+      
+      // 起始位置
+      const level = LEVELS[currentLevel];
+      drone.position = new BABYLON.Vector3(level.start.x, 0.5, level.start.z);
+      dronePos = drone.position.clone();
+      
+      // 陰影投射
+      const shadowGen = new BABYLON.ShadowGenerator(512, dirLight = scene.getLightByName("dir"));
+      if (shadowGen) {
+        shadowGen.addShadowCaster(drone);
+      }
+    }
+    
+    // 建立終點標記
+    function createGoal() {
+      goalMarker = BABYLON.MeshBuilder.CreateCylinder("goal", { height: 0.05, diameter: 2 }, scene);
+      const goalMat = new BABYLON.StandardMaterial("goalMat", scene);
+      goalMat.diffuseColor = new BABYLON.Color3(0.3, 0.7, 0.3);
+      goalMat.emissiveColor = new BABYLON.Color3(0.1, 0.3, 0.1);
+      goalMat.alpha = 0.6;
+      goalMarker.material = goalMat;
+      
+      // 終點旗幟
+      const flagPole = BABYLON.MeshBuilder.CreateCylinder("flagPole", { height: 1.5, diameter: 0.05 }, scene);
+      flagPole.position.y = 0.75;
+      const poleMat = new BABYLON.StandardMaterial("poleMat", scene);
+      poleMat.diffuseColor = new BABYLON.Color3(0.4, 0.25, 0.15);
+      flagPole.material = poleMat;
+      flagPole.parent = goalMarker;
+      
+      const flag = BABYLON.MeshBuilder.CreatePlane("flag", { width: 0.6, height: 0.4 }, scene);
+      flag.position = new BABYLON.Vector3(0.35, 1.2, 0);
+      flag.rotation.y = Math.PI / 2;
+      const flagMat = new BABYLON.StandardMaterial("flagMat", scene);
+      flagMat.diffuseColor = new BABYLON.Color3(0.95, 0.2, 0.2);
+      flagMat.emissiveColor = new BABYLON.Color3(0.3, 0.05, 0.05);
+      flag.material = flagMat;
+      flag.parent = goalMarker;
+      
+      updateGoalPosition();
+    }
+    
+    function updateGoalPosition() {
+      const level = LEVELS[currentLevel];
+      goalMarker.position = new BABYLON.Vector3(level.goal.x, 0.03, level.goal.z);
+    }
+    
+    // 攝影機縮放
+    function cameraZoom(factor) {
+      zoomLevel *= factor;
+      zoomLevel = Math.max(50, Math.min(150, zoomLevel));
+      camera.radius = 20 * (100 / zoomLevel);
+      document.getElementById('zoom-label').textContent = Math.round(zoomLevel) + '%';
+    }
+    
+    function resetCamera() {
+      zoomLevel = 100;
+      camera.radius = 20;
+      camera.alpha = -Math.PI / 2;
+      camera.beta = Math.PI / 3;
+      document.getElementById('zoom-label').textContent = '100%';
+    }
+    
+    // ===== Blockly 積木定義 =====
+    const DRONE_BLOCKS = `
+    <xml>
+      <block type="drone_takeoff">
+        <field name="ICON">🚀</field>
+      </block>
+      <block type="drone_forward">
+        <field name="ICON">⬆️</field>
+        <value name="STEPS">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="drone_backward">
+        <field name="ICON">⬇️</field>
+        <value name="STEPS">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="drone_left">
+        <field name="ICON">↩️</field>
+      </block>
+      <block type="drone_right">
+        <field name="ICON">↪️</field>
+      </block>
+      <block type="drone_wait">
+        <field name="ICON">⏱️</field>
+        <value name="SECONDS">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="drone_land">
+        <field name="ICON">🛬</field>
+      </block>
+      <block type="controls_repeat">
+        <field name="ICON">🔄</field>
+        <value name="TIMES">
+          <shadow type="math_number">
+            <field name="NUM">3</field>
+          </shadow>
+        </value>
+      </block>
+    </xml>
+    `;
+    
+    // 定義積木
+    function defineBlocks() {
+      // 起飛
+      Blockly.Blocks['drone_takeoff'] = {
+        init: function() {
+          this.appendDummyInput()
+            .appendField('🚀 起飛');
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour('#4A90D9');
+          this.setTooltip('讓無人機起飛');
+        }
+      };
+      
+      // 前進
+      Blockly.Blocks['drone_forward'] = {
+        init: function() {
+          this.appendValueInput('STEPS')
+            .appendField('⬆️ 前進')
+            .setCheck('Number');
+          this.setInputsInline(true);
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour('#4A90D9');
+          this.setTooltip('讓無人機向前移動');
+        }
+      };
+      
+      // 後退
+      Blockly.Blocks['drone_backward'] = {
+        init: function() {
+          this.appendValueInput('STEPS')
+            .appendField('⬇️ 後退')
+            .setCheck('Number');
+          this.setInputsInline(true);
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour('#4A90D9');
+          this.setTooltip('讓無人機向後移動');
+        }
+      };
+      
+      // 左轉
+      Blockly.Blocks['drone_left'] = {
+        init: function() {
+          this.appendDummyInput()
+            .appendField('↩️ 左轉');
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour('#4A90D9');
+          this.setTooltip('讓無人機向左轉90度');
+        }
+      };
+      
+      // 右轉
+      Blockly.Blocks['drone_right'] = {
+        init: function() {
+          this.appendDummyInput()
+            .appendField('↪️ 右轉');
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour('#4A90D9');
+          this.setTooltip('讓無人機向右轉90度');
+        }
+      };
+      
+      // 等待
+      Blockly.Blocks['drone_wait'] = {
+        init: function() {
+          this.appendValueInput('SECONDS')
+            .appendField('⏱️ 等待')
+            .setCheck('Number');
+          this.setInputsInline(true);
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour('#F5A623');
+          this.setTooltip('等待指定秒數');
+        }
+      };
+      
+      // 着陸
+      Blockly.Blocks['drone_land'] = {
+        init: function() {
+          this.appendDummyInput()
+            .appendField('🛬 着陸');
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour('#F56C6C');
+          this.setTooltip('讓無人機降落');
+        }
+      };
+    }
+    
+    // Blockly 初始化
+    let workspace;
+    function initBlockly() {
+      defineBlocks();
+      
+      const toolbox = document.getElementById('toolbox');
+      
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: toolbox,
+        scrollbars: true,
+        trashcan: true,
+        collapse: false,
+        horizontalLayout: false,
+        theme: {
+          'blockBoundingBoxColour': '#667eea',
+          'commentBackgroundColour': '#fff',
+          'commentTextColour': '#333',
+          'defaultBlockColour': '#888',
+          'disabledColour': '#ccc',
+          'dropdownColour': '#1a1a2e',
+          'dropdownStroke': '#333',
+          'flyoutColour': '#16213e',
+          'flyoutMaxHeight': 400,
+          'ghostColour': '#667eea',
+          'highlightColour': '#667eea',
+          'hoverColour': '#555',
+          'inputColour': '#1a1a2e',
+          'markerColour': '#ff0',
+          'propsScrollbarColour': '#667eea',
+          'replacementColour': '#667eea',
+          'runColour': '#50C878',
+          'scrollbarColour': '#444',
+          'scrollbarOpacity': 0.3,
+          'textColour': '#fff',
+          'toolbarColour': '#1a1a2e',
+          'toolboxColour': '#16213e',
+          'toolboxForegroundColour': '#fff',
+          'toolboxBackgroundColour': '#16213e',
+          'treeBackgroundColour': 'transparent',
+          'workspaceBackgroundColour': '#0f1729'
+        },
+        grid: {
+          spacing: 24,
+          length: 3,
+          colour: 'rgba(102, 126, 234, 0.15)',
+          snap: true
+        }
+      });
+      
+      // 監聽積木變化
+      workspace.addChangeListener(updateBlockCount);
+    }
+    
+    function updateBlockCount() {
+      const blocks = workspace.getAllBlocks();
+      document.getElementById('block-count').textContent = `${blocks.length} 個積木`;
+    }
+    
+    // ===== 執行積木程式 =====
+    async function runProgram() {
+      if (isExecuting) return;
+      
+      const blocks = workspace.getTopBlocks();
+      if (blocks.length === 0) {
+        showStatus('fail', '請先加入積木！');
+        return;
+      }
+      
+      isExecuting = true;
+      document.getElementById('run-btn').disabled = true;
+      showStatus('running', '🔄 執行中...');
+      
+      // 重置無人機狀態
+      resetDroneState();
+      
+      // 執行每個積木
+      for (const block of blocks) {
+        await executeBlock(block);
+      }
+      
+      isExecuting = false;
+      document.getElementById('run-btn').disabled = false;
+      
+      // 檢查是否到達終點
+      checkGoal();
+    }
+    
+    function resetDroneState() {
+      const level = LEVELS[currentLevel];
+      drone.position = new BABYLON.Vector3(level.start.x, 0.5, level.start.z);
+      dronePos = drone.position.clone();
+      droneDirection = 0;
+      droneFlying = false;
+      drone.rotation = BABYLON.Vector3.Zero();
+      updateDroneStatus('😴', '待機');
+    }
+    
+    async function executeBlock(block) {
+      const type = block.type;
+      let steps = 1;
+      let seconds = 1;
+      
+      // 獲取參數
+      if (block.type === 'drone_forward' || block.type === 'drone_backward') {
+        const input = block.getInput('STEPS');
+        if (input && input.connection && input.connection.targetBlock) {
+          const numBlock = input.connection.targetBlock;
+          if (numBlock.fields && numBlock.fields.NUM !== undefined) {
+            steps = parseInt(numBlock.fields.NUM) || 1;
+          }
+        }
+        steps = Math.max(1, Math.min(10, steps));
+      }
+      
+      if (block.type === 'drone_wait') {
+        const input = block.getInput('SECONDS');
+        if (input && input.connection && input.connection.targetBlock) {
+          const numBlock = input.connection.targetBlock;
+          if (numBlock.fields && numBlock.fields.NUM !== undefined) {
+            seconds = parseInt(numBlock.fields.NUM) || 1;
+          }
+        }
+        seconds = Math.max(0.5, Math.min(5, seconds));
+      }
+      
+      if (block.type === 'controls_repeat') {
+        const timesInput = block.getInput('TIMES');
+        if (timesInput && timesInput.connection && timesInput.connection.targetBlock) {
+          const numBlock = timesInput.connection.targetBlock;
+          if (numBlock.fields && numBlock.fields.NUM !== undefined) {
+            steps = parseInt(numBlock.fields.NUM) || 1;
+          }
+        }
+        steps = Math.max(1, Math.min(10, steps));
+      }
+      
+      // 根據積木類型執行
+      switch (type) {
+        case 'drone_takeoff':
+          await animateTakeoff();
+          break;
+          
+        case 'drone_forward':
+          for (let i = 0; i < steps; i++) {
+            await animateMove(1);
+            await delay(100);
+          }
+          break;
+          
+        case 'drone_backward':
+          for (let i = 0; i < steps; i++) {
+            await animateMove(-1);
+            await delay(100);
+          }
+          break;
+          
+        case 'drone_left':
+          await animateTurn(-90);
+          break;
+          
+        case 'drone_right':
+          await animateTurn(90);
+          break;
+          
+        case 'drone_wait':
+          await delay(seconds * 500);
+          break;
+          
+        case 'drone_land':
+          await animateLand();
+          break;
+          
+        case 'controls_repeat':
+          // 獲取巢狀積木
+          const childBlock = block.getInputTargetBlock('DO');
+          if (childBlock) {
+            for (let i = 0; i < steps; i++) {
+              await executeBlock(childBlock);
+            }
+          }
+          break;
+      }
+      
+      // 高亮效果
+      if (block.pathObject) {
+        block.pathObject.style.filter = 'drop-shadow(0 0 8px #667eea)';
+        await delay(200);
+        block.pathObject.style.filter = '';
+      }
+    }
+    
+    async function animateTakeoff() {
+      if (!droneFlying) {
+        droneFlying = true;
+        updateDroneStatus('😀', '起飛中');
+        
+        // 起飛動畫
+        const startY = drone.position.y;
+        const targetY = 2;
+        const duration = 600;
+        const startTime = Date.now();
+        
+        return new Promise(resolve => {
+          function animate() {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // 使用緩動函數
+            const eased = 1 - Math.pow(1 - progress, 3);
+            drone.position.y = startY + (targetY - startY) * eased;
+            
+            // 輕微搖晃
+            drone.rotation.x = Math.sin(elapsed / 100) * 0.02;
+            drone.rotation.z = Math.cos(elapsed / 120) * 0.02;
+            
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              drone.rotation = BABYLON.Vector3.Zero();
+              resolve();
+            }
+          }
+          animate();
+        });
+      }
+    }
+    
+    async function animateMove(direction) {
+      if (!droneFlying) {
+        await animateTakeoff();
+      }
+      
+      const speed = 1.5;
+      const targetX = drone.position.x + direction * Math.cos(droneDirection * Math.PI / 180);
+      const targetZ = drone.position.z + Math.sin(droneDirection * Math.PI / 180);
+      
+      return new Promise(resolve => {
+        const startX = drone.position.x;
+        const startZ = drone.position.z;
+        const duration = 400;
+        const startTime = Date.now();
+        
+        updateDroneStatus('😎', '移動中');
+        
+        function animate() {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 2);
+          
+          drone.position.x = startX + (targetX - startX) * eased;
+          drone.position.z = startZ + (targetZ - startZ) * eased;
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            dronePos = drone.position.clone();
+            resolve();
+          }
+        }
+        animate();
+      });
+    }
+    
+    async function animateTurn(angle) {
+      if (!droneFlying) {
+        await animateTakeoff();
+      }
+      
+      droneDirection = (droneDirection + angle + 360) % 360;
+      
+      return new Promise(resolve => {
+        const startRot = drone.rotation.y;
+        const targetRot = angle * Math.PI / 180;
+        const duration = 300;
+        const startTime = Date.now();
+        
+        updateDroneStatus('😉', '轉向中');
+        
+        function animate() {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 2);
+          
+          drone.rotation.y = startRot + (targetRot - startRot) * eased;
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            drone.rotation.y = targetRot;
+            resolve();
+          }
+        }
+        animate();
+      });
+    }
+    
+    async function animateLand() {
+      droneFlying = false;
+      updateDroneStatus('🥰', '降落中');
+      
+      return new Promise(resolve => {
+        const startY = drone.position.y;
+        const targetY = 0.5;
+        const duration = 600;
+        const startTime = Date.now();
+        
+        function animate() {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = progress * progress;
+          
+          drone.position.y = startY + (targetY - startY) * eased;
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            drone.position.y = targetY;
+            resolve();
+          }
+        }
+        animate();
+      });
+    }
+    
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    function updateDroneStatus(expr, text) {
+      document.getElementById('drone-expr').textContent = `${expr} ${text}`;
+    }
+    
+    function showStatus(type, msg) {
+      const el = document.getElementById('status-msg');
+      el.className = type;
+      el.textContent = msg;
+    }
+    
+    function checkGoal() {
+      const level = LEVELS[currentLevel];
+      const dx = Math.abs(drone.position.x - level.goal.x);
+      const dz = Math.abs(drone.position.z - level.goal.z);
+      
+      // 終點檢測（半徑 1.5 範圍內）
+      if (dx < 1.5 && dz < 1.5) {
+        showWin();
+      } else if (droneFlying) {
+        showStatus('fail', '❌ 未到達終點，再試一次！');
+      }
+    }
+    
+    function showWin() {
+      showStatus('success', '🎉 過關了！');
+      document.getElementById('win-modal').classList.add('show');
+      playSuccessSound();
+    }
+    
+    function playSuccessSound() {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.25);
+        }, i * 120);
+      });
+    }
+    
+    function nextLevel() {
+      document.getElementById('win-modal').classList.remove('show');
+      if (currentLevel < LEVELS.length - 1) {
+        currentLevel++;
+      } else {
+        currentLevel = 0;
+      }
+      loadLevel(currentLevel);
+    }
+    
+    function loadLevel(index) {
+      const level = LEVELS[index];
+      document.getElementById('level-title').textContent = level.name;
+      document.getElementById('level-info').textContent = `Level ${index + 1} / ${LEVELS.length}`;
+      document.getElementById('progress-text').textContent = `${index + 1} / ${LEVELS.length}`;
+      
+      // 重置場景
+      drone.position = new BABYLON.Vector3(level.start.x, 0.5, level.start.z);
+      drone.rotation = BABYLON.Vector3.Zero();
+      droneDirection = 0;
+      droneFlying = false;
+      
+      updateGoalPosition();
+      updateDroneStatus('😴', '待機');
+      showStatus('ready', '準備就緒');
+      
+      // 清空積木
+      workspace.clear();
+    }
+    
+    function showHint() {
+      const level = LEVELS[currentLevel];
+      const hint = document.getElementById('hint-toast');
+      hint.innerHTML = level.hint.replace(/\n/g, '<br>');
+      hint.classList.add('show');
+      
+      setTimeout(() => hint.classList.remove('show'), 5000);
+    }
+    
+    function resetLevel() {
+      loadLevel(currentLevel);
+    }
+    
+    // 點擊其他地方關閉提示
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.top-btn') && !e.target.closest('#hint-toast')) {
+        document.getElementById('hint-toast').classList.remove('show');
+      }
+    });
+    
+    // 初始化
+    window.addEventListener('load', () => {
+      initBabylon();
+      initBlockly();
+      loadLevel(0);
+      
+      // 音頻初始化
+      document.body.addEventListener('click', () => {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+      }, { once: true });
+    });
+  </script>
+</body>
+</html>
