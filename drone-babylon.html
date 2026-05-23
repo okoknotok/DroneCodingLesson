@@ -684,6 +684,7 @@
     // ===== Onboarding Tutorial State =====
     const TUTORIAL_KEY = 'drone_tutorial_done';
     let tutorialStep = 0;
+    let tutorialActive = false;
     let tutorialDone = false;
     
     const TUTORIAL_STEPS = [
@@ -716,6 +717,7 @@
     function startTutorial() {
       if (tutorialDone || localStorage.getItem(TUTORIAL_KEY)) return;
       tutorialStep = 0;
+      tutorialActive = true;
       showTutorialStep();
     }
     
