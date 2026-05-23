@@ -200,95 +200,6 @@
     .signal-bar:nth-child(5) { height: 18px; }
     .tello-divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 6px 0; }
     
-    /* ===== Onboarding Tutorial ===== */
-    /* ===== Tutorial v3 - 4-panel spotlight system ===== */
-    .tut-panel {
-      position: fixed;
-      background: rgba(0,0,0,0.72);
-      z-index: 900;
-      pointer-events: auto;
-    }
-    .tut-panel-top    { top: 0; left: 0; }
-    .tut-panel-bottom { top: auto; left: 0; }
-    .tut-panel-left   { top: auto; left: 0; }
-    .tut-panel-right  { top: auto; left: auto; }
-
-    .tut-highlight {
-      position: fixed;
-      border-radius: 8px;
-      border: 3px solid #667eea;
-      box-shadow: 0 0 0 0 transparent;
-      z-index: 901;
-      pointer-events: none;
-    }
-
-    .tut-tooltip {
-      position: fixed;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      padding: 16px 20px;
-      border-radius: 14px;
-      font-size: 15px;
-      font-weight: 600;
-      max-width: 260px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.45);
-      z-index: 902;
-      line-height: 1.55;
-      pointer-events: none;
-    }
-    .tut-tooltip-text {
-      font-family: 'Nunito', sans-serif;
-    }
-
-    .tut-finger {
-      position: fixed;
-      font-size: 36px;
-      z-index: 903;
-      pointer-events: none;
-      animation: tut-bounce 0.55s infinite alternate;
-      transform: translateX(-50%);
-    }
-    @keyframes tut-bounce {
-      from { transform: translateX(-50%) translateY(0); }
-      to   { transform: translateX(-50%) translateY(-10px); }
-    }
-
-    .tut-skip {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.28);
-      color: #ccc;
-      padding: 9px 18px;
-      border-radius: 22px;
-      cursor: pointer;
-      font-size: 12px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 600;
-      z-index: 904;
-      transition: background 0.2s, color 0.2s;
-    }
-    .tut-skip:hover {
-      background: rgba(255,255,255,0.22);
-      color: white;
-    }
-
-    .tut-progress {
-      position: fixed;
-      display: flex;
-      gap: 7px;
-      z-index: 904;
-    }
-    .tut-dot {
-      width: 9px; height: 9px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.28);
-      transition: background 0.3s;
-    }
-    .tut-dot-active { background: #667eea; }
-    .tut-dot-done   { background: #50C878; }
-    @keyframes goalPulse {
       0%, 100% { transform: translateX(-50%) scale(1); }
       50% { transform: translateX(-50%) scale(1.03); }
     }
@@ -480,9 +391,136 @@
     .blocklyBlockSummary {
       animation: blockSnap 0.2s ease-out;
     }
+
+    /* ===== Welcome Modal ===== */
+    .welcome-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .welcome-modal.hidden { display: none; }
+    .welcome-content {
+      background: linear-gradient(135deg, #1a1f35, #252d4a);
+      border: 2px solid #667eea;
+      border-radius: 20px;
+      padding: 36px 40px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .welcome-content h2 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 6px;
+    }
+    .welcome-subtitle {
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      color: #aaa;
+      margin-bottom: 28px;
+    }
+    .welcome-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .welcome-step {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+    }
+    .step-num {
+      width: 32px; height: 32px;
+      background: #667eea;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      color: white;
+      flex-shrink: 0;
+    }
+    .step-desc {
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      color: #ddd;
+    }
+    .step-desc strong { color: #667eea; }
+    .welcome-screenshot-placeholder {
+      background: rgba(255,255,255,0.05);
+      border: 1px dashed rgba(255,255,255,0.15);
+      border-radius: 12px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      color: #555;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+    }
+    .welcome-start-btn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      color: white;
+      padding: 14px 40px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .welcome-start-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 8px 25px rgba(102,126,234,0.5);
+    }
+
   </style>
 </head>
 <body>
+
+  <!-- Welcome Modal -->
+  <div id="welcome-modal" class="welcome-modal">
+    <div class="welcome-content">
+      <h2>🚁 無人機指令營</h2>
+      <p class="welcome-subtitle">第一次玩？了解點樣玩啦！</p>
+      <div class="welcome-steps">
+        <div class="welcome-step">
+          <div class="step-num">1</div>
+          <div class="step-desc">揀<strong>左邊</strong>嘅分類搵積木</div>
+        </div>
+        <div class="welcome-step">
+          <div class="step-num">2</div>
+          <div class="step-desc">拖積木去<strong>中間</strong>workspace</div>
+        </div>
+        <div class="welcome-step">
+          <div class="step-num">3</div>
+          <div class="step-desc">㩒<strong>執行</strong>跑你嘅程式</div>
+        </div>
+        <div class="welcome-step">
+          <div class="step-num">4</div>
+          <div class="step-desc">睇<strong>3D 無人機</strong>飛起！</div>
+        </div>
+      </div>
+      <div class="welcome-screenshot-placeholder">
+        <!-- Screenshot here later -->
+      </div>
+      <button class="welcome-start-btn" onclick="closeWelcomeModal()">開始！</button>
+    </div>
+  </div>
+
 
   
   <div id="top-bar">
@@ -503,7 +541,6 @@
       <button class="top-btn theme-toggle" onclick="toggleTheme()">🌙</button>
       <button class="top-btn" onclick="resetScene()">🔄 重置</button>
       <button class="top-btn" onclick="clearBlocks()">🗑️ 清除</button>
-      <button class="top-btn tutorial-reset-btn" onclick="Tutorial.reset()">📖 重新觀看教學</button>
     </div>
   </div>
   
@@ -669,217 +706,16 @@
     let flightStartTime = null;
     let hudIntervalId = null;
     
-    // ===== Onboarding Tutorial =====
-    // localStorage key: drone_tutorial_done
-    // Public API: window.Tutorial.start(), .reset(), .skip(), .complete()
 
-    // ===== Tutorial v3 =====
-    // localStorage key: drone_tutorial_done_v3
-    // Debug: window.Tutorial.start/reset/skip/complete/showStep/advance
-    window.Tutorial = (function() {
-      var STEPS = [
-        {
-          target: '.blocklyToolboxCategory',
-          text: '第一步：按呢度揀「移動」分類',
-          waitFor: 'categoryClick'
-        },
-        {
-          target: '.blocklyFlyout .blocklyBlock',
-          text: '第二步：拖「起飛」積木去右邊 workspace',
-          waitFor: 'blockAddTakeoff'
-        },
-        {
-          target: '.blocklyFlyout .blocklyBlock',
-          text: '第三步：再拖「降落」積木去 workspace',
-          waitFor: 'blockAddLand'
-        },
-        {
-          target: '#run-btn',
-          text: '第四步：按「執行」睇無人機起飛！',
-          waitFor: 'runClick'
-        }
-      ];
 
-      var active = false;
-      var currentStep = 0;
-      var STORAGE_KEY = 'drone_…e_v3';
-
-      // DOM refs
-      var panelTop, panelLeft, panelRight, panelBottom;
-      var highlight, tooltip, skipBtn, progressDots, finger;
-
-      function createElements() {
-        destroyElements();
-        panelTop    = el('div', 'tut-panel tut-panel-top');
-        panelLeft   = el('div', 'tut-panel tut-panel-left');
-        panelRight  = el('div', 'tut-panel tut-panel-right');
-        panelBottom = el('div', 'tut-panel tut-panel-bottom');
-        highlight   = el('div', 'tut-highlight');
-        tooltip     = el('div', 'tut-tooltip');
-        tooltip.innerHTML = '<div class="tut-tooltip-text"></div>';
-        skipBtn     = el('button', 'tut-skip');
-        skipBtn.innerHTML = '跳過教學';
-        skipBtn.onclick = skip;
-        progressDots = el('div', 'tut-progress');
-        finger      = el('div', 'tut-finger');
-        finger.innerHTML = '&#x1F446;';
-        document.body.appendChild(panelTop);
-        document.body.appendChild(panelLeft);
-        document.body.appendChild(panelRight);
-        document.body.appendChild(panelBottom);
-        document.body.appendChild(highlight);
-        document.body.appendChild(tooltip);
-        document.body.appendChild(skipBtn);
-        document.body.appendChild(progressDots);
-        document.body.appendChild(finger);
-      }
-
-      function el(tag, cls) {
-        var d = document.createElement(tag);
-        d.className = cls;
-        return d;
-      }
-
-      function destroyElements() {
-        var sel = '.tut-panel, .tut-highlight, .tut-tooltip, .tut-skip, .tut-progress, .tut-finger';
-        var list = document.querySelectorAll(sel);
-        list.forEach(function(e) { if (e.parentNode) e.parentNode.removeChild(e); });
-        panelTop = panelLeft = panelRight = panelBottom = highlight = tooltip = skipBtn = progressDots = finger = null;
-      }
-
-      function positionPanels(rect) {
-        var W = window.innerWidth;
-        var H = window.innerHeight;
-        var pad = 6;
-        panelTop.style.cssText    = 'top:0;left:0;width:' + W + 'px;height:' + (rect.top - pad) + 'px';
-        panelLeft.style.cssText  = 'top:' + (rect.top - pad) + 'px;left:0;width:' + (rect.left - pad) + 'px;height:' + (rect.height + pad*2) + 'px';
-        panelRight.style.cssText = 'top:' + (rect.top - pad) + 'px;left:' + (rect.right + pad) + 'px;width:' + (W - rect.right - pad) + 'px;height:' + (rect.height + pad*2) + 'px';
-        panelBottom.style.cssText = 'top:' + (rect.bottom + pad) + 'px;left:0;width:' + W + 'px;height:' + (H - rect.bottom - pad) + 'px';
-      }
-
-      function positionHighlight(rect) {
-        var pad = 6;
-        highlight.style.cssText = 'left:' + (rect.left - pad) + 'px;top:' + (rect.top - pad) + 'px;width:' + (rect.width + pad*2) + 'px;height:' + (rect.height + pad*2) + 'px';
-      }
-
-      function positionFinger(rect) {
-        finger.style.cssText = 'left:' + (rect.left + rect.width/2) + 'px;top:' + (rect.bottom + 18) + 'px';
-      }
-
-      function positionTooltip(rect, step) {
-        var pad = 6;
-        var ttW = 260, ttH = 70;
-        tooltip.style.cssText = 'left:' + (rect.left + rect.width/2 - ttW/2) + 'px;top:' + (rect.bottom + pad + 50) + 'px';
-        tooltip.querySelector('.tut-tooltip-text').textContent = step.text;
-      }
-
-      function updateProgress() {
-        progressDots.innerHTML = STEPS.map(function(_, i) {
-          var cls = 'tut-dot' + (i < currentStep ? ' tut-dot-done' : i === currentStep ? ' tut-dot-active' : '');
-          return '<div class="' + cls + '"></div>';
-        }).join('');
-        progressDots.style.cssText = 'left:20px;bottom:20px';
-      }
-
-      function waitForElement(selector, maxRetries) {
-        return new Promise(function(resolve) {
-          var e = document.querySelector(selector);
-          if (e) { resolve(e); return; }
-          var count = 0;
-          var iv = setInterval(function() {
-            e = document.querySelector(selector);
-            if (e || ++count >= maxRetries) { clearInterval(iv); resolve(e); }
-          }, 100);
-        });
-      }
-
-      function showStep() {
-        if (!active) return;
-        if (currentStep >= STEPS.length) { complete(); return; }
-
-        var step = STEPS[currentStep];
-        console.log('[Tutorial] showStep', currentStep, 'target:', step.target);
-
-        waitForElement(step.target, 30).then(function(target) {
-          if (!target) {
-            console.warn('[Tutorial] target not found:', step.target, '- advancing');
-            currentStep++;
-            showStep();
-            return;
-          }
-          var rect = target.getBoundingClientRect();
-          if (rect.width === 0 || rect.height === 0) {
-            setTimeout(showStep.bind(this), 200);
-            return;
-          }
-          positionPanels(rect);
-          positionHighlight(rect);
-          positionFinger(rect);
-          positionTooltip(rect, step);
-          updateProgress();
-          console.log('[Tutorial] Waiting for:', step.waitFor);
-        });
-      }
-
-      function start() {
-        if (localStorage.getItem(STORAGE_KEY)) { console.log('[Tutorial] Already done'); return; }
-        if (active) { console.warn('[Tutorial] Already active'); return; }
-        active = true;
-        currentStep = 0;
-        createElements();
-        showStep();
-        console.log('[Tutorial] Started');
-      }
-
-      function reset() {
-        console.log('[Tutorial] Reset');
-        localStorage.removeItem(STORAGE_KEY);
-        destroyElements();
-        active = false;
-        currentStep = 0;
-        start();
-      }
-
-      function skip() {
-        console.log('[Tutorial] Skipped');
-        complete();
-      }
-
-      function complete() {
-        active = false;
-        localStorage.setItem(STORAGE_KEY, 'true');
-        destroyElements();
-        console.log('[Tutorial] Completed');
-      }
-
-      function advance(event) {
-        if (!active) return;
-        var step = STEPS[currentStep];
-        if (!step) return;
-        if (step.waitFor !== event) {
-          console.log('[Tutorial] advance - got', event, 'expecting', step.waitFor, '- ignored');
-          return;
-        }
-        console.log('[Tutorial] Step', currentStep, 'done with:', event);
-        currentStep++;
-        showStep();
-      }
-
-      // Resize handler
-      window.addEventListener('resize', function() {
-        if (active && currentStep < STEPS.length) showStep();
-      });
-
-      return {
-        start: start, reset: reset, skip: skip, complete: complete,
-        showStep: showStep, advance: advance,
-        get STEPS() { return STEPS; },
-        get active() { return active; },
-        get currentStep() { return currentStep; }
-      };
-    })();
-
-    var TUTORIAL_KEY = 'drone_…e_v3';
+    var WELCOME_DONE_KEY = 'drone_welcome_done';
+    function closeWelcomeModal() {
+      document.getElementById('welcome-modal').classList.add('hidden');
+      localStorage.setItem(WELCOME_DONE_KEY, 'true');
+    }
+    if (localStorage.getItem(WELCOME_DONE_KEY)) {
+      document.getElementById('welcome-modal').classList.add('hidden');
+    }
 
     // ===== Level Data =====
     const LEVELS = [
@@ -1340,14 +1176,8 @@
               if (block.pathObject) block.pathObject.style.filter = '';
             }, 200);
           }
-          // Tutorial: check if takeoff block was added
-          if (Tutorial.active && block && block.type === 'drone_takeoff' && block.getParent()) Tutorial.advance('blockAddTakeoff');
-          // Tutorial: check if land block was added
-          if (Tutorial.active && block && block.type === 'drone_land' && block.getParent()) Tutorial.advance('blockAddLand');
         }
-        // Tutorial: category click
-        if (Tutorial.active && e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
-          Tutorial.advance('categoryClick');
+        if (false && e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
         }
       });
     }
@@ -1363,7 +1193,6 @@
     // ===== Execute Program =====
     async function runProgram() {
       if (isExecuting) return;
-      if (Tutorial.active) Tutorial.advance('runClick');
       const allBlocks = workspace.getAllBlocks();
       if (allBlocks.length === 0) { setStatus('fail', '請先加入積木！'); return; }
       
@@ -1702,10 +1531,6 @@
       
       workspace.clear();
       
-      // Start tutorial for first level
-      if (index === 0 && !localStorage.getItem(TUTORIAL_KEY)) {
-        setTimeout(Tutorial.start.bind(Tutorial), 800);
-      }
       setStatus('ready', '準備就緒');
     }
     
@@ -1822,12 +1647,6 @@
       batteryEl.closest('.tello-row').classList.remove('warning', 'critical');
     }
     
-    // Reposition tutorial on resize
-    window.addEventListener('resize', () => {
-      if (Tutorial.active) {
-        Tutorial.showStep();
-      }
-    });
     
     window.addEventListener('load', () => {
       initBabylon();
