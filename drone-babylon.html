@@ -127,43 +127,6 @@
     }
     #renderCanvas { width: 100%; height: 100%; touch-action: none; display: block; }
     
-    /* Micro:bit LED Panel */
-    #led-panel {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(10, 18, 32, 0.95);
-      border-radius: 14px;
-      padding: 12px;
-      border: 2px solid #333;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    }
-    #led-panel h4 {
-      color: #888;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-    #led-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 3px;
-      width: 90px;
-    }
-    .led-pixel {
-      width: 16px;
-      height: 16px;
-      background: #1a3a5c;
-      border-radius: 2px;
-      transition: background 0.2s, box-shadow 0.2s;
-    }
-    .led-pixel.on {
-      background: #00ff88;
-      box-shadow: 0 0 8px #00ff88;
-    }
-    
     #overlay-ui {
       position: absolute;
       top: 12px;
@@ -402,38 +365,6 @@
       <div id="canvas-wrapper">
         <canvas id="renderCanvas"></canvas>
         
-        <!-- Micro:bit LED Panel -->
-        <div id="led-panel">
-          <h4>Micro:bit</h4>
-          <div id="led-grid">
-            <div class="led-pixel" data-x="0" data-y="0"></div>
-            <div class="led-pixel" data-x="1" data-y="0"></div>
-            <div class="led-pixel" data-x="2" data-y="0"></div>
-            <div class="led-pixel" data-x="3" data-y="0"></div>
-            <div class="led-pixel" data-x="4" data-y="0"></div>
-            <div class="led-pixel" data-x="0" data-y="1"></div>
-            <div class="led-pixel" data-x="1" data-y="1"></div>
-            <div class="led-pixel" data-x="2" data-y="1"></div>
-            <div class="led-pixel" data-x="3" data-y="1"></div>
-            <div class="led-pixel" data-x="4" data-y="1"></div>
-            <div class="led-pixel" data-x="0" data-y="2"></div>
-            <div class="led-pixel" data-x="1" data-y="2"></div>
-            <div class="led-pixel" data-x="2" data-y="2"></div>
-            <div class="led-pixel" data-x="3" data-y="2"></div>
-            <div class="led-pixel" data-x="4" data-y="2"></div>
-            <div class="led-pixel" data-x="0" data-y="3"></div>
-            <div class="led-pixel" data-x="1" data-y="3"></div>
-            <div class="led-pixel" data-x="2" data-y="3"></div>
-            <div class="led-pixel" data-x="3" data-y="3"></div>
-            <div class="led-pixel" data-x="4" data-y="3"></div>
-            <div class="led-pixel" data-x="0" data-y="4"></div>
-            <div class="led-pixel" data-x="1" data-y="4"></div>
-            <div class="led-pixel" data-x="2" data-y="4"></div>
-            <div class="led-pixel" data-x="3" data-y="4"></div>
-            <div class="led-pixel" data-x="4" data-y="4"></div>
-          </div>
-        </div>
-        
         <div id="overlay-ui">
           <div class="info-card">
             <div class="lbl">無人機</div>
@@ -536,64 +467,7 @@
     let propSpeed = 0;
     let targetPropSpeed = 0;
     let isDarkTheme = true;
-    let currentLedPattern = null;
-    let ledAnimationTime = 0;
-    
     let zoomLevel = 100;
-    
-    // ===== LED Patterns =====
-    const LED_PATTERNS = {
-      idle: [
-        [0,0,0,0,0],
-        [0,0,0,0,0],
-        [0,0,1,0,0],
-        [0,0,0,0,0],
-        [0,0,0,0,0]
-      ],
-      happy: [
-        [0,1,0,1,0],
-        [0,0,0,0,0],
-        [0,0,0,0,0],
-        [1,0,0,0,1],
-        [0,1,1,1,0]
-      ],
-      forward: [
-        [0,0,1,0,0],
-        [0,1,1,1,0],
-        [1,0,1,0,1],
-        [0,0,1,0,0],
-        [0,0,1,0,0]
-      ],
-      left: [
-        [0,0,1,0,0],
-        [0,1,0,0,0],
-        [1,1,1,1,1],
-        [0,1,0,0,0],
-        [0,0,1,0,0]
-      ],
-      right: [
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [1,1,1,1,1],
-        [0,0,1,0,0],
-        [0,0,1,0,0]
-      ],
-      land: [
-        [0,1,1,1,0],
-        [1,0,0,0,1],
-        [0,0,0,0,0],
-        [0,1,0,1,0],
-        [0,0,1,0,0]
-      ],
-      warn: [
-        [0,0,0,0,0],
-        [0,1,0,1,0],
-        [0,0,0,0,0],
-        [0,1,0,1,0],
-        [0,0,0,0,0]
-      ]
-    };
-    
     // ===== Level Data =====
     const LEVELS = [
       { name: '第一關：起飛着陸', hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸', solution: ['drone_takeoff','drone_forward','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 0 }, goal: { x: 3, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }, obstacles: [] },
@@ -663,13 +537,6 @@
         propellers.forEach((prop, i) => {
           prop.rotation.y += propSpeed * (i % 2 === 0 ? 1 : -1);
         });
-        
-        // LED breathing animation
-        if (currentLedPattern) {
-          ledAnimationTime += 0.05;
-          const breathe = Math.sin(ledAnimationTime) * 0.3 + 0.7;
-          updateLEDWithIntensity(currentLedPattern, breathe);
-        }
         
         scene.render();
       });
@@ -900,8 +767,6 @@
       droneMeshes.forEach(mesh => {
         if (shadowGenerator) shadowGenerator.addShadowCaster(mesh);
       });
-      
-      updateDroneLEDPattern('idle');
     }
     
     function createGoal() {
@@ -948,40 +813,6 @@
         box.receiveShadows = true;
         if (shadowGenerator) shadowGenerator.addShadowCaster(box);
         obstacles.push(box);
-      });
-    }
-    
-    // ===== LED Functions =====
-    function updateDroneLEDPattern(patternName) {
-      currentLedPattern = LED_PATTERNS[patternName] || LED_PATTERNS.idle;
-      updateLEDDisplay(currentLedPattern);
-    }
-    
-    function updateLEDDisplay(pattern) {
-      const pixels = document.querySelectorAll('.led-pixel');
-      pixels.forEach(pixel => {
-        const x = parseInt(pixel.dataset.x);
-        const y = parseInt(pixel.dataset.y);
-        if (pattern[y] && pattern[y][x]) {
-          pixel.classList.add('on');
-        } else {
-          pixel.classList.remove('on');
-        }
-      });
-    }
-    
-    function updateLEDWithIntensity(pattern, intensity) {
-      const pixels = document.querySelectorAll('.led-pixel');
-      pixels.forEach(pixel => {
-        const x = parseInt(pixel.dataset.x);
-        const y = parseInt(pixel.dataset.y);
-        if (pattern[y] && pattern[y][x]) {
-          pixel.classList.add('on');
-          pixel.style.opacity = intensity;
-        } else {
-          pixel.classList.remove('on');
-          pixel.style.opacity = 1;
-        }
       });
     }
     
@@ -1159,7 +990,6 @@
       isFlying = false;
       targetPropSpeed = 0;
       updateDroneUI('😴', '待機');
-      updateDroneLEDPattern('idle');
     }
     
     async function executeBlock(block) {
@@ -1193,8 +1023,8 @@
         case 'drone_backward':
           for (let i = 0; i < steps; i++) { await animateMove(-1); }
           break;
-        case 'drone_left_turn': await animateTurn(-90); updateDroneLEDPattern('left'); break;
-        case 'drone_right_turn': await animateTurn(90); updateDroneLEDPattern('right'); break;
+        case 'drone_left_turn': await animateTurn(-90); break;
+        case 'drone_right_turn': await animateTurn(90); break;
         case 'drone_wait': await delay(seconds * 500); break;
         case 'drone_land': await animateLand(); break;
         case 'drone_repeat':
@@ -1210,9 +1040,9 @@
             if (childBlock) await executeBlock(childBlock);
           }
           break;
-        case 'drone_led_green': setLEDColor(0.2, 0.9, 0.3); updateDroneLEDPattern('happy'); break;
-        case 'drone_led_red': setLEDColor(0.9, 0.2, 0.2); updateDroneLEDPattern('warn'); break;
-        case 'drone_led_yellow': setLEDColor(0.9, 0.9, 0.2); updateDroneLEDPattern('happy'); break;
+        case 'drone_led_green': setLEDColor(0.2, 0.9, 0.3); break;
+        case 'drone_led_red': setLEDColor(0.9, 0.2, 0.2); break;
+        case 'drone_led_yellow': setLEDColor(0.9, 0.9, 0.2); break;
         case 'drone_stop': isExecuting = false; break;
       }
       
@@ -1224,7 +1054,6 @@
         isFlying = true;
         targetPropSpeed = 0.25; // Faster spin for takeoff
         updateDroneUI('😀', '起飛中');
-        updateDroneLEDPattern('forward');
         createParticleEffect(droneNode.position.x, droneNode.position.z, 'takeoff');
         
         const startY = droneY;
@@ -1252,7 +1081,6 @@
       if (!isFlying) await animateTakeoff();
       
       updateDroneUI('😎', '移動中');
-      updateDroneLEDPattern('forward');
       
       const rad = droneDirection * Math.PI / 180;
       const dx = Math.cos(rad) * dir * 1.5;
@@ -1263,7 +1091,6 @@
       
       if (checkCollision(targetX, targetZ)) {
         updateDroneUI('😱', '撞到了！');
-        updateDroneLEDPattern('warn');
         setStatus('fail', '💥 撞到障礙物！');
         playFailSound();
         isExecuting = false;
@@ -1319,7 +1146,6 @@
       isFlying = false;
       targetPropSpeed = 0.1; // Slow down for landing
       updateDroneUI('🥰', '降落中');
-      updateDroneLEDPattern('land');
       createParticleEffect(droneNode.position.x, droneNode.position.z, 'land');
       
       const startY = droneY;
@@ -1452,7 +1278,6 @@
       
       workspace.clear();
       setStatus('ready', '準備就緒');
-      updateDroneLEDPattern('idle');
     }
     
     function updateLevelButtons() {
