@@ -694,13 +694,13 @@
         waitFor: 'categoryClick'
       },
       {
-        target: '#blocklyDiv [data-id="drone_takeoff"]',
+        target: '.blocklyFlyout [data-id="drone_takeoff"], .blocklyFlyout [type="drone_takeoff"]',
         text: 'Step 2\n拖「起飛」積木去右邊',
         position: 'left',
         waitFor: 'blockAddTakeoff'
       },
       {
-        target: '#blocklyDiv [data-id="drone_land"]',
+        target: '.blocklyFlyout [data-id="drone_land"], .blocklyFlyout [type="drone_land"]',
         text: 'Step 3\n再拖「降落」積木',
         position: 'left',
         waitFor: 'blockAddLand'
