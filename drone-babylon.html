@@ -200,6 +200,82 @@
     .signal-bar:nth-child(5) { height: 18px; }
     .tello-divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 6px 0; }
     
+    /* ===== Onboarding Tutorial ===== */
+    #tutorial-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      display: none;
+    }
+    #tutorial-overlay.active { display: block; }
+    #tutorial-spotlight {
+      position: absolute;
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
+      transition: all 0.4s ease;
+      z-index: 1001;
+    }
+    #tutorial-tooltip {
+      position: absolute;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      max-width: 220px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      z-index: 1002;
+      line-height: 1.5;
+    }
+    #tutorial-tooltip::before {
+      content: '';
+      position: absolute;
+      width: 0; height: 0;
+      border: 10px solid transparent;
+    }
+    #tutorial-tooltip.top::before { bottom: -20px; left: 50%; transform: translateX(-50%); border-top-color: #667eea; }
+    #tutorial-tooltip.bottom::before { top: -20px; left: 50%; transform: translateX(-50%); border-bottom-color: #667eea; }
+    #tutorial-tooltip.left::before { right: -20px; top: 50%; transform: translateY(-50%); border-left-color: #667eea; }
+    #tutorial-tooltip.right::before { left: -20px; top: 50%; transform: translateY(-50%); border-right-color: #667eea; }
+    #tutorial-arrow {
+      position: absolute;
+      font-size: 28px;
+      z-index: 1003;
+      animation: bounce 0.6s infinite alternate;
+    }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+    #tutorial-skip {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #ccc;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 12px;
+      z-index: 1004;
+    }
+    #tutorial-skip:hover { background: rgba(255,255,255,0.25); color: white; }
+    #tutorial-progress {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      gap: 6px;
+      z-index: 1004;
+    }
+    .tutorial-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+    }
+    .tutorial-dot.active { background: #667eea; }
+    .tutorial-dot.done { background: #50C878; }
+    
     #goal-hud {
       position: absolute;
       bottom: 16px;
@@ -412,6 +488,16 @@
   </style>
 </head>
 <body>
+  <!-- Onboarding Tutorial -->
+  <div id="tutorial-overlay"></div>
+  <div id="tutorial-spotlight"></div>
+  <div id="tutorial-tooltip">
+    <div id="tutorial-text"></div>
+  </div>
+  <div id="tutorial-arrow">👇</div>
+  <button id="tutorial-skip" onclick="skipTutorial()">跳過教學</button>
+  <div id="tutorial-progress"></div>
+  
   <div id="top-bar">
     <div id="logo-area">
       <span id="logo">🚁</span>
@@ -594,6 +680,105 @@
     let telloFlightTime = 0;
     let flightStartTime = null;
     let hudIntervalId = null;
+    
+    // ===== Onboarding Tutorial State =====
+    const TUTORIAL_KEY = 'drone_tutorial_done';
+    let tutorialStep = 0;
+    let tutorialDone = false;
+    
+    const TUTORIAL_STEPS = [
+      {
+        target: '#blocklyDiv .blocklyToolboxCategory:first-child',
+        text: 'Step 1\n按呢度揀「移動」分類',
+        position: 'right',
+        waitFor: 'categoryClick'
+      },
+      {
+        target: '#blocklyDiv [data-id="drone_takeoff"]',
+        text: 'Step 2\n拖「起飛」積木去右邊',
+        position: 'left',
+        waitFor: 'blockAddTakeoff'
+      },
+      {
+        target: '#blocklyDiv [data-id="drone_land"]',
+        text: 'Step 3\n再拖「降落」積木',
+        position: 'left',
+        waitFor: 'blockAddLand'
+      },
+      {
+        target: '#run-btn',
+        text: 'Step 4\n按「執行」睇結果！',
+        position: 'top',
+        waitFor: 'runClick'
+      }
+    ];
+    
+    function startTutorial() {
+      if (tutorialDone || localStorage.getItem(TUTORIAL_KEY)) return;
+      tutorialStep = 0;
+      showTutorialStep();
+    }
+    
+    function showTutorialStep() {
+      if (tutorialStep >= TUTORIAL_STEPS.length) {
+        endTutorial();
+        return;
+      }
+      const step = TUTORIAL_STEPS[tutorialStep];
+      const target = document.querySelector(step.target);
+      if (!target) { tutorialStep++; showTutorialStep(); return; }
+      
+      const rect = target.getBoundingClientRect();
+      const overlay = document.getElementById('tutorial-overlay');
+      const spotlight = document.getElementById('tutorial-spotlight');
+      const tooltip = document.getElementById('tutorial-tooltip');
+      const arrow = document.getElementById('tutorial-arrow');
+      const progress = document.getElementById('tutorial-progress');
+      
+      overlay.classList.add('active');
+      spotlight.style.cssText = `left:${rect.left-8}px;top:${rect.top-8}px;width:${rect.width+16}px;height:${rect.height+16}px;`;
+      
+      document.getElementById('tutorial-text').innerHTML = step.text.replace(/\n/g, '<br>');
+      
+      tooltip.className = 'tutorial-tooltip ' + step.position;
+      const tooltipW = 220, tooltipH = 80;
+      if (step.position === 'right') {
+        tooltip.style.cssText = `left:${rect.right+20}px;top:${rect.top+rect.height/2-tooltipH/2}px`;
+        arrow.style.cssText = `left:${rect.left-30}px;top:${rect.top+rect.height/2-14}px`;
+      } else if (step.position === 'left') {
+        tooltip.style.cssText = `left:${rect.left-tooltipW-20}px;top:${rect.top+rect.height/2-tooltipH/2}px`;
+        arrow.style.cssText = `left:${rect.right+10}px;top:${rect.top+rect.height/2-14}px`;
+      } else if (step.position === 'top') {
+        tooltip.style.cssText = `left:${rect.left+rect.width/2-tooltipW/2}px;top:${rect.bottom+20}px`;
+        arrow.style.cssText = `left:${rect.left+rect.width/2-14}px;top:${rect.top-40}px`;
+      } else {
+        tooltip.style.cssText = `left:${rect.left+rect.width/2-tooltipW/2}px;top:${rect.top-tooltipH-20}px`;
+        arrow.style.cssText = `left:${rect.left+rect.width/2-14}px;top:${rect.bottom+10}px`;
+      }
+      
+      // Progress dots
+      progress.innerHTML = TUTORIAL_STEPS.map((_, i) => 
+        `<div class="tutorial-dot ${i<tutorialStep?'done':i===tutorialStep?'active':''}"></div>`
+      ).join('');
+    }
+    
+    function advanceTutorial(waitFor) {
+      const step = TUTORIAL_STEPS[tutorialStep];
+      if (!step || step.waitFor !== waitFor) return;
+      tutorialStep++;
+      showTutorialStep();
+    }
+    
+    function endTutorial() {
+      document.getElementById('tutorial-overlay').classList.remove('active');
+      document.getElementById('tutorial-spotlight').style.cssText = '';
+      document.getElementById('tutorial-tooltip').style.cssText = '';
+      document.getElementById('tutorial-arrow').style.cssText = '';
+      tutorialDone = true;
+      localStorage.setItem(TUTORIAL_KEY, 'true');
+    }
+    
+    function skipTutorial() { endTutorial(); }
     
     // ===== Level Data =====
     const LEVELS = [
@@ -1054,6 +1239,14 @@
               if (block.pathObject) block.pathObject.style.filter = '';
             }, 200);
           }
+          // Tutorial: check if takeoff block was added
+          if (block && block.type === 'drone_takeoff') advanceTutorial('blockAddTakeoff');
+          // Tutorial: check if land block was added
+          if (block && block.type === 'drone_land') advanceTutorial('blockAddLand');
+        }
+        // Tutorial: category click
+        if (e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
+          advanceTutorial('categoryClick');
         }
       });
     }
@@ -1069,6 +1262,7 @@
     // ===== Execute Program =====
     async function runProgram() {
       if (isExecuting) return;
+      advanceTutorial('runClick');
       const allBlocks = workspace.getAllBlocks();
       if (allBlocks.length === 0) { setStatus('fail', '請先加入積木！'); return; }
       
@@ -1406,6 +1600,11 @@
       updatePositionHUD();
       
       workspace.clear();
+      
+      // Start tutorial for first level
+      if (index === 0 && !localStorage.getItem(TUTORIAL_KEY)) {
+        setTimeout(startTutorial, 800);
+      }
       setStatus('ready', '準備就緒');
     }
     
@@ -1521,6 +1720,13 @@
       batteryEl.textContent = '100%';
       batteryEl.closest('.tello-row').classList.remove('warning', 'critical');
     }
+    
+    // Reposition tutorial on resize
+    window.addEventListener('resize', () => {
+      if (tutorialStep < TUTORIAL_STEPS.length && !tutorialDone) {
+        showTutorialStep();
+      }
+    });
     
     window.addEventListener('load', () => {
       initBabylon();
