@@ -216,8 +216,7 @@
       box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
       transition: all 0.4s ease;
       z-index: 1001;
-      pointer-events: auto;
-      cursor: pointer;
+      pointer-events: none;
     }
     #tutorial-tooltip {
       position: absolute;
@@ -231,6 +230,7 @@
       box-shadow: 0 8px 30px rgba(0,0,0,0.4);
       z-index: 1002;
       line-height: 1.5;
+      pointer-events: none;
     }
     #tutorial-tooltip::before {
       content: '';
@@ -689,6 +689,8 @@
     const TUTORIAL_KEY = 'drone_tutorial_done';
     let tutorialStep = 0;
     let tutorialDone = false;
+    let tutorialActive = false;
+    let tutorialGuardTimeout = null;
     
     const TUTORIAL_STEPS = [
       {
@@ -720,6 +722,9 @@
     function startTutorial() {
       if (tutorialDone || localStorage.getItem(TUTORIAL_KEY)) return;
       tutorialStep = 0;
+      tutorialActive = true;
+      // Add guard to prevent premature advancement
+      tutorialGuardTimeout = setTimeout(() => {}, 1000);
       showTutorialStep();
     }
     
@@ -741,14 +746,6 @@
       
       overlay.classList.add('active');
       spotlight.style.cssText = `left:${rect.left-8}px;top:${rect.top-8}px;width:${rect.width+16}px;height:${rect.height+16}px;`;
-      spotlight.onclick = () => {
-        const step = TUTORIAL_STEPS[tutorialStep];
-        if (step.waitFor === 'categoryClick') {
-          const cat = document.querySelector(step.target);
-          if (cat) cat.click();
-          advanceTutorial(step.waitFor);
-        }
-      };
       
       document.getElementById('tutorial-text').innerHTML = step.text.replace(/\n/g, '<br>');
       
@@ -775,9 +772,12 @@
     }
     
     function advanceTutorial(waitFor) {
+      if (!tutorialActive) return;
       const step = TUTORIAL_STEPS[tutorialStep];
       if (!step || step.waitFor !== waitFor) return;
+      clearTimeout(tutorialGuardTimeout);
       tutorialStep++;
+      tutorialGuardTimeout = setTimeout(() => {}, 1000); // Re-arm guard
       showTutorialStep();
     }
     
@@ -787,6 +787,8 @@
       document.getElementById('tutorial-tooltip').style.cssText = '';
       document.getElementById('tutorial-arrow').style.cssText = '';
       tutorialDone = true;
+      tutorialActive = false;
+      clearTimeout(tutorialGuardTimeout);
       localStorage.setItem(TUTORIAL_KEY, 'true');
     }
     
@@ -1252,12 +1254,12 @@
             }, 200);
           }
           // Tutorial: check if takeoff block was added
-          if (block && block.type === 'drone_takeoff') advanceTutorial('blockAddTakeoff');
+          if (tutorialActive && block && block.type === 'drone_takeoff') advanceTutorial('blockAddTakeoff');
           // Tutorial: check if land block was added
-          if (block && block.type === 'drone_land') advanceTutorial('blockAddLand');
+          if (tutorialActive && block && block.type === 'drone_land') advanceTutorial('blockAddLand');
         }
         // Tutorial: category click
-        if (e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
+        if (tutorialActive && e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
           advanceTutorial('categoryClick');
         }
       });
@@ -1274,7 +1276,7 @@
     // ===== Execute Program =====
     async function runProgram() {
       if (isExecuting) return;
-      advanceTutorial('runClick');
+      if (tutorialActive) advanceTutorial('runClick');
       const allBlocks = workspace.getAllBlocks();
       if (allBlocks.length === 0) { setStatus('fail', '請先加入積木！'); return; }
       
