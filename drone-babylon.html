@@ -205,7 +205,7 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.7);
-      z-index: 1001;
+      z-index: 1000;
       display: none;
     }
     #tutorial-overlay.active { display: block; }
@@ -258,7 +258,6 @@
       cursor: pointer;
       font-size: 12px;
       z-index: 1004;
-      pointer-events: auto;
     }
     #tutorial-skip:hover { background: rgba(255,255,255,0.25); color: white; }
     #tutorial-progress {
@@ -683,161 +682,113 @@
     let hudIntervalId = null;
     
     // ===== Onboarding Tutorial State =====
-// ===== Onboarding Tutorial State =====
-    const TUTORIAL_KEY = 'drone_tutorial_done_v2';
+    const TUTORIAL_KEY = 'drone_tutorial_done';
     let tutorialStep = 0;
     let tutorialDone = false;
-    let tutorialActive = false;
-
+    
     const TUTORIAL_STEPS = [
       {
-        name: 'category',
-        text: '第一步：按呢度揀「移動」分類',
+        target: '#blocklyDiv .blocklyToolboxCategory:first-child',
+        text: 'Step 1\n按呢度揀「移動」分類',
         position: 'right',
-        event: 'categoryClick'
+        waitFor: 'categoryClick'
       },
       {
-        name: 'takeoff',
-        text: '第二步：拖「起飛」積木去右邊workspace',
+        target: '#blocklyDiv [data-id="drone_takeoff"]',
+        text: 'Step 2\n拖「起飛」積木去右邊',
         position: 'left',
-        event: 'blockAddTakeoff'
+        waitFor: 'blockAddTakeoff'
       },
       {
-        name: 'land',
-        text: '第三步：再拖「降落」積木去workspace',
+        target: '#blocklyDiv [data-id="drone_land"]',
+        text: 'Step 3\n再拖「降落」積木',
         position: 'left',
-        event: 'blockAddLand'
+        waitFor: 'blockAddLand'
       },
       {
-        name: 'run',
-        text: '第四步：按「執行」睇無人機起飛！',
+        target: '#run-btn',
+        text: 'Step 4\n按「執行」睇結果！',
         position: 'top',
-        event: 'runClick'
+        waitFor: 'runClick'
       }
     ];
-
+    
     function startTutorial() {
-      const saved = localStorage.getItem(TUTORIAL_KEY);
-      if (saved) { console.log("[Tutorial] localStorage says done"); return; }
+      if (tutorialDone || localStorage.getItem(TUTORIAL_KEY)) return;
       tutorialStep = 0;
-      tutorialActive = true;
-      alert('Tutorial starting! Tutorial_KEY=');
-      console.log('[Tutorial] Starting');
       showTutorialStep();
     }
-
-    function getStepTarget(step) {
-      switch(step.name) {
-        case 'category':
-          return document.querySelector('.blocklyToolboxCategory');
-        case 'takeoff':
-          return document.querySelector('[data-id="drone_takeoff"]');
-        case 'land':
-          return document.querySelector('[data-id="drone_land"]');
-        case 'run':
-          return document.getElementById('run-btn');
-        default:
-          return null;
-      }
-    }
-
+    
     function showTutorialStep() {
       if (tutorialStep >= TUTORIAL_STEPS.length) {
-        console.log('[Tutorial] Complete');
         endTutorial();
         return;
       }
-
       const step = TUTORIAL_STEPS[tutorialStep];
-      const target = getStepTarget(step);
-
-      console.log('[Tutorial] Step', tutorialStep, '- target:', step.name, '- found:', !!target);
-
-      if (!target) {
-        tutorialStep++;
-        setTimeout(showTutorialStep, 300);
-        return;
-      }
-
+      const target = document.querySelector(step.target);
+      if (!target) { tutorialStep++; showTutorialStep(); return; }
+      
       const rect = target.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) {
-        setTimeout(showTutorialStep, 300);
-        return;
-      }
-
       const overlay = document.getElementById('tutorial-overlay');
       const spotlight = document.getElementById('tutorial-spotlight');
       const tooltip = document.getElementById('tutorial-tooltip');
       const arrow = document.getElementById('tutorial-arrow');
       const progress = document.getElementById('tutorial-progress');
-
+      
       overlay.classList.add('active');
-
-      const pad = 10;
-      spotlight.style.cssText = `left:${rect.left - pad}px;top:${rect.top - pad}px;width:${rect.width + pad*2}px;height:${rect.height + pad*2}px;`;
-
-      document.getElementById('tutorial-text').textContent = step.text;
-
+      spotlight.style.cssText = `left:${rect.left-8}px;top:${rect.top-8}px;width:${rect.width+16}px;height:${rect.height+16}px;`;
+      
+      document.getElementById('tutorial-text').innerHTML = step.text.replace(/\n/g, '<br>');
+      
       tooltip.className = 'tutorial-tooltip ' + step.position;
-      const tw = 220, th = 60;
+      const tooltipW = 220, tooltipH = 80;
       if (step.position === 'right') {
-        tooltip.style.cssText = `left:${rect.right + 30}px;top:${rect.top + rect.height/2 - th/2}px`;
-        arrow.style.cssText = `left:${rect.left - 35}px;top:${rect.top + rect.height/2 - 14}px`;
+        tooltip.style.cssText = `left:${rect.right+20}px;top:${rect.top+rect.height/2-tooltipH/2}px`;
+        arrow.style.cssText = `left:${rect.left-30}px;top:${rect.top+rect.height/2-14}px`;
       } else if (step.position === 'left') {
-        tooltip.style.cssText = `left:${rect.left - tw - 30}px;top:${rect.top + rect.height/2 - th/2}px`;
-        arrow.style.cssText = `left:${rect.right + 15}px;top:${rect.top + rect.height/2 - 14}px`;
+        tooltip.style.cssText = `left:${rect.left-tooltipW-20}px;top:${rect.top+rect.height/2-tooltipH/2}px`;
+        arrow.style.cssText = `left:${rect.right+10}px;top:${rect.top+rect.height/2-14}px`;
       } else if (step.position === 'top') {
-        tooltip.style.cssText = `left:${rect.left + rect.width/2 - tw/2}px;top:${rect.bottom + 25}px`;
-        arrow.style.cssText = `left:${rect.left + rect.width/2 - 14}px;top:${rect.top - 40}px`;
+        tooltip.style.cssText = `left:${rect.left+rect.width/2-tooltipW/2}px;top:${rect.bottom+20}px`;
+        arrow.style.cssText = `left:${rect.left+rect.width/2-14}px;top:${rect.top-40}px`;
       } else {
-        tooltip.style.cssText = `left:${rect.left + rect.width/2 - tw/2}px;top:${rect.top - th - 25}px`;
-        arrow.style.cssText = `left:${rect.left + rect.width/2 - 14}px;top:${rect.bottom + 10}px`;
+        tooltip.style.cssText = `left:${rect.left+rect.width/2-tooltipW/2}px;top:${rect.top-tooltipH-20}px`;
+        arrow.style.cssText = `left:${rect.left+rect.width/2-14}px;top:${rect.bottom+10}px`;
       }
-
-      progress.innerHTML = TUTORIAL_STEPS.map((_, i) =>
-        `<div class="tutorial-dot ${i < tutorialStep ? 'done' : i === tutorialStep ? 'active' : ''}"></div>`
+      
+      // Progress dots
+      progress.innerHTML = TUTORIAL_STEPS.map((_, i) => 
+        `<div class="tutorial-dot ${i<tutorialStep?'done':i===tutorialStep?'active':''}"></div>`
       ).join('');
-
-      console.log('[Tutorial] Waiting for:', step.event);
     }
-
-    function advanceTutorial(event) {
-      if (!tutorialActive) return;
-
+    
+    function advanceTutorial(waitFor) {
       const step = TUTORIAL_STEPS[tutorialStep];
-      if (!step) return;
-
-      if (step.event !== event) {
-        console.log('[Tutorial] Ignored event:', event, 'expecting:', step.event);
-        return;
-      }
-
-      console.log('[Tutorial] Step', tutorialStep, 'done with:', event);
+      if (!step || step.waitFor !== waitFor) return;
       tutorialStep++;
       showTutorialStep();
     }
-
+    
     function endTutorial() {
-      const overlay = document.getElementById('tutorial-overlay');
-      const spotlight = document.getElementById('tutorial-spotlight');
-      const tooltip = document.getElementById('tutorial-tooltip');
-      const arrow = document.getElementById('tutorial-arrow');
-      const progress = document.getElementById('tutorial-progress');
-
-      overlay.classList.remove('active');
-      spotlight.style.cssText = '';
-      tooltip.style.cssText = '';
-      arrow.style.cssText = '';
-      progress.innerHTML = '';
-
-      tutorialActive = false;
+      document.getElementById('tutorial-overlay').classList.remove('active');
+      document.getElementById('tutorial-spotlight').style.cssText = '';
+      document.getElementById('tutorial-tooltip').style.cssText = '';
+      document.getElementById('tutorial-arrow').style.cssText = '';
+      tutorialDone = true;
       localStorage.setItem(TUTORIAL_KEY, 'true');
-      console.log('[Tutorial] Saved');
     }
-
-    function skipTutorial() {
-      endTutorial();
-    }    
+    
+    function skipTutorial() { endTutorial(); }
+    
+    // ===== Level Data =====
+    const LEVELS = [
+      { name: '第一關：起飛着陸', hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸', solution: ['drone_takeoff','drone_forward','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 0 }, goal: { x: 3, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }, obstacles: [] },
+      { name: '第二關：轉向前進', hint: '🎯 目標：L 形路線，先前進再左轉，然後着陸\n\n💡 提示：起飛 → 前進 → 左轉 → 前進 → 着陸', solution: ['drone_takeoff','drone_forward','drone_left_turn','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 4 }, goal: { x: -2, z: -4 }, cameraPos: { alpha: -Math.PI / 2.5, beta: Math.PI / 3.5, radius: 20 }, obstacles: [] },
+      { name: '第三關：正方形', hint: '🎯 目標：走正方形路線\n\n💡 提示：前進 → 右轉 × 3（正方形）→ 着陸', solution: ['drone_takeoff','drone_forward','drone_right_turn','drone_forward','drone_right_turn','drone_forward','drone_right_turn','drone_forward','drone_land'], start: { x: 0, z: 5 }, goal: { x: 0, z: 5 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 4, radius: 22 }, obstacles: [] },
+      { name: '第四關：長距離', hint: '🎯 目標：穿越整個客廳到終點\n\n💡 提示：使用「重複」積木減少積木數量', solution: ['drone_takeoff','drone_repeat','drone_forward','drone_land'], start: { x: -8, z: 0 }, goal: { x: 8, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 25 }, obstacles: [{ x: 0, z: 0, w: 1.5, h: 8, color: '#8B4513' }] },
+      { name: '第五關：迷宮挑戰', hint: '🎯 目標：繞過障礙物到達終點\n\n💡 提示：需要多次轉向來繞過障礙', solution: ['drone_takeoff','drone_forward','drone_forward','drone_left_turn','drone_forward','drone_forward','drone_right_turn','drone_forward','drone_forward','drone_land'], start: { x: -7, z: 5 }, goal: { x: 7, z: -5 }, cameraPos: { alpha: -Math.PI / 1.8, beta: Math.PI / 3.5, radius: 24 }, obstacles: [{ x: -3, z: 2, w: 6, h: 1, color: '#654321' }, { x: 3, z: -2, w: 6, h: 1, color: '#654321' }] }
+    ];
+    
     // ===== Blockly Blocks =====
     function defineBlocks() {
       Blockly.Blocks['drone_takeoff'] = { init: function() { this.appendDummyInput().appendField('🚀 起飛'); this.setPreviousStatement(true, null); this.setNextStatement(true, null); this.setColour('#4A90D9'); } };
@@ -1289,12 +1240,12 @@
             }, 200);
           }
           // Tutorial: check if takeoff block was added
-          if (tutorialActive && block && block.type === 'drone_takeoff') advanceTutorial('blockAddTakeoff');
+          if (block && block.type === 'drone_takeoff') advanceTutorial('blockAddTakeoff');
           // Tutorial: check if land block was added
-          if (tutorialActive && block && block.type === 'drone_land') advanceTutorial('blockAddLand');
+          if (block && block.type === 'drone_land') advanceTutorial('blockAddLand');
         }
         // Tutorial: category click
-        if (tutorialActive && e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
+        if (e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
           advanceTutorial('categoryClick');
         }
       });
@@ -1311,7 +1262,7 @@
     // ===== Execute Program =====
     async function runProgram() {
       if (isExecuting) return;
-      if (tutorialActive) advanceTutorial('runClick');
+      advanceTutorial('runClick');
       const allBlocks = workspace.getAllBlocks();
       if (allBlocks.length === 0) { setStatus('fail', '請先加入積木！'); return; }
       
