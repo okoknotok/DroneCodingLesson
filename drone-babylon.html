@@ -201,100 +201,93 @@
     .tello-divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 6px 0; }
     
     /* ===== Onboarding Tutorial ===== */
-    #tutorial-overlay {
+    /* ===== Tutorial v3 - 4-panel spotlight system ===== */
+    .tut-panel {
       position: fixed;
-      inset: 0;
-      z-index: 999;
-      display: none;
-      pointer-events: none;
-    }
-    #tutorial-overlay.active { display: block; }
-    #tutorial-overlay.active * {
+      background: rgba(0,0,0,0.72);
+      z-index: 900;
       pointer-events: auto;
     }
-    #tutorial-spotlight {
-      position: absolute;
-      border-radius: 12px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.75);
-      z-index: 1000;
-      pointer-events: none;
+    .tut-panel-top    { top: 0; left: 0; }
+    .tut-panel-bottom { top: auto; left: 0; }
+    .tut-panel-left   { top: auto; left: 0; }
+    .tut-panel-right  { top: auto; left: auto; }
+
+    .tut-highlight {
+      position: fixed;
+      border-radius: 8px;
       border: 3px solid #667eea;
+      box-shadow: 0 0 0 0 transparent;
+      z-index: 901;
+      pointer-events: none;
     }
-    #tutorial-tooltip {
-      position: absolute;
+
+    .tut-tooltip {
+      position: fixed;
       background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
       padding: 16px 20px;
-      border-radius: 16px;
+      border-radius: 14px;
       font-size: 15px;
       font-weight: 600;
       max-width: 260px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-      z-index: 1001;
-      line-height: 1.6;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+      z-index: 902;
+      line-height: 1.55;
+      pointer-events: none;
     }
-    #tutorial-tooltip::before {
-      content: '';
-      position: absolute;
-      width: 0; height: 0;
-      border: 10px solid transparent;
+    .tut-tooltip-text {
+      font-family: 'Nunito', sans-serif;
     }
-    #tutorial-tooltip.top::before { bottom: -20px; left: 50%; transform: translateX(-50%); border-top-color: #667eea; }
-    #tutorial-tooltip.bottom::before { top: -20px; left: 50%; transform: translateX(-50%); border-bottom-color: #667eea; }
-    #tutorial-tooltip.left::before { right: -20px; top: 50%; transform: translateY(-50%); border-left-color: #667eea; }
-    #tutorial-tooltip.right::before { left: -20px; top: 50%; transform: translateY(-50%); border-right-color: #667eea; }
-    #tutorial-arrow {
-      position: absolute;
-      font-size: 32px;
-      z-index: 1002;
-      animation: bounce 0.6s infinite alternate;
+
+    .tut-finger {
+      position: fixed;
+      font-size: 36px;
+      z-index: 903;
+      pointer-events: none;
+      animation: tut-bounce 0.55s infinite alternate;
+      transform: translateX(-50%);
     }
-    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
-    #tutorial-skip {
+    @keyframes tut-bounce {
+      from { transform: translateX(-50%) translateY(0); }
+      to   { transform: translateX(-50%) translateY(-10px); }
+    }
+
+    .tut-skip {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.28);
       color: #ccc;
-      padding: 8px 16px;
-      border-radius: 20px;
+      padding: 9px 18px;
+      border-radius: 22px;
       cursor: pointer;
       font-size: 12px;
-      z-index: 1003;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      z-index: 904;
+      transition: background 0.2s, color 0.2s;
     }
-    #tutorial-skip:hover { background: rgba(255,255,255,0.25); color: white; }
-    #tutorial-progress {
+    .tut-skip:hover {
+      background: rgba(255,255,255,0.22);
+      color: white;
+    }
+
+    .tut-progress {
       position: fixed;
-      bottom: 20px;
-      left: 20px;
       display: flex;
-      gap: 6px;
-      z-index: 1003;
+      gap: 7px;
+      z-index: 904;
     }
-    .tutorial-dot {
-      width: 8px; height: 8px;
+    .tut-dot {
+      width: 9px; height: 9px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.28);
       transition: background 0.3s;
     }
-    .tutorial-dot.active { background: #667eea; }
-    .tutorial-dot.done { background: #50C878; }
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(67, 160, 71, 0.9);
-      padding: 10px 20px;
-      border-radius: 25px;
-      color: white;
-      font-weight: 700;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 20px rgba(67, 160, 71, 0.4);
-      animation: goalPulse 1.5s infinite;
-    }
+    .tut-dot-active { background: #667eea; }
+    .tut-dot-done   { background: #50C878; }
     @keyframes goalPulse {
       0%, 100% { transform: translateX(-50%) scale(1); }
       50% { transform: translateX(-50%) scale(1.03); }
@@ -490,15 +483,7 @@
   </style>
 </head>
 <body>
-  <!-- Onboarding Tutorial -->
-  <div id="tutorial-overlay"></div>
-  <div id="tutorial-spotlight"></div>
-  <div id="tutorial-tooltip">
-    <div id="tutorial-text"></div>
-  </div>
-  <div id="tutorial-arrow">👇</div>
-  <button id="tutorial-skip" onclick="Tutorial.skip()">跳過教學</button>
-  <div id="tutorial-progress"></div>
+
   
   <div id="top-bar">
     <div id="logo-area">
@@ -687,139 +672,215 @@
     // ===== Onboarding Tutorial =====
     // localStorage key: drone_tutorial_done
     // Public API: window.Tutorial.start(), .reset(), .skip(), .complete()
-    // Debug: window.Tutorial.active, .currentStep, .steps
-    const Tutorial = {
-      active: false,
-      currentStep: 0,
-      steps: [
+
+    // ===== Tutorial v3 =====
+    // localStorage key: drone_tutorial_done_v3
+    // Debug: window.Tutorial.start/reset/skip/complete/showStep/advance
+    window.Tutorial = (function() {
+      var STEPS = [
         {
           target: '.blocklyToolboxCategory',
-          text: 'Step 1\nClick the "Move" category',
-          position: 'right',
+          text: '第一步：按呢度揀「移動」分類',
           waitFor: 'categoryClick'
         },
         {
-          target: '.blocklyFlyout [data-id="drone_takeoff"], .blocklyFlyout [type="drone_takeoff"]',
-          text: 'Step 2\nDrag "Takeoff" block to workspace',
-          position: 'left',
+          target: '.blocklyFlyout .blocklyBlock',
+          text: '第二步：拖「起飛」積木去右邊 workspace',
           waitFor: 'blockAddTakeoff'
         },
         {
-          target: '.blocklyFlyout [data-id="drone_land"], .blocklyFlyout [type="drone_land"]',
-          text: 'Step 3\nDrag "Land" block to workspace',
-          position: 'left',
+          target: '.blocklyFlyout .blocklyBlock',
+          text: '第三步：再拖「降落」積木去 workspace',
           waitFor: 'blockAddLand'
         },
         {
           target: '#run-btn',
-          text: 'Step 4\nClick Run to see the drone!',
-          position: 'top',
+          text: '第四步：按「執行」睇無人機起飛！',
           waitFor: 'runClick'
         }
-      ],
-      start: function() {
-        if (localStorage.getItem(TUTORIAL_KEY)) {
-          console.log('[Tutorial] Already completed, skipping');
-          return;
-        }
-        if (this.active) {
-          console.warn('[Tutorial] Already active, refusing to start');
-          return;
-        }
-        this.active = true;
-        this.currentStep = 0;
-        console.log('[Tutorial] Started');
-        this.showStep();
-      },
-      reset: function() {
-        console.log('[Tutorial] Reset requested');
-        localStorage.removeItem(TUTORIAL_KEY);
-        this.active = false;
-        this.currentStep = 0;
-        document.getElementById('tutorial-overlay').classList.remove('active');
-        document.getElementById('tutorial-spotlight').style.cssText = '';
-        document.getElementById('tutorial-tooltip').style.cssText = '';
-        document.getElementById('tutorial-arrow').style.cssText = '';
-        document.getElementById('tutorial-progress').innerHTML = '';
-        console.log('[Tutorial] State cleared, restarting...');
-        this.start();
-      },
-      skip: function() {
-        console.log('[Tutorial] Skipped by user');
-        this.complete();
-      },
-      complete: function() {
-        this.active = false;
-        localStorage.setItem(TUTORIAL_KEY, 'true');
-        document.getElementById('tutorial-overlay').classList.remove('active');
-        document.getElementById('tutorial-spotlight').style.cssText = '';
-        document.getElementById('tutorial-tooltip').style.cssText = '';
-        document.getElementById('tutorial-arrow').style.cssText = '';
-        document.getElementById('tutorial-progress').innerHTML = '';
-        console.log('[Tutorial] Completed and saved');
-      },
-      showStep: function() {
-        if (this.currentStep >= this.steps.length) {
-          this.complete();
-          return;
-        }
-        const step = this.steps[this.currentStep];
-        const target = document.querySelector(step.target);
-        console.log('[Tutorial] Step', this.currentStep, '- target:', step.target, '- found:', !!target);
-        if (!target) {
-          this.currentStep++;
-          setTimeout(this.showStep.bind(this), 300);
-          return;
-        }
-        const rect = target.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) {
-          setTimeout(this.showStep.bind(this), 300);
-          return;
-        }
-        const overlay = document.getElementById('tutorial-overlay');
-        const spotlight = document.getElementById('tutorial-spotlight');
-        const tooltip = document.getElementById('tutorial-tooltip');
-        const arrow = document.getElementById('tutorial-arrow');
-        const progress = document.getElementById('tutorial-progress');
-        overlay.classList.add('active');
-        const pad = 10;
-        spotlight.style.cssText = 'left:' + (rect.left - pad) + 'px;top:' + (rect.top - pad) + 'px;width:' + (rect.width + pad*2) + 'px;height:' + (rect.height + pad*2) + 'px;';
-        document.getElementById('tutorial-text').innerHTML = step.text.replace(/\n/g, '<br>');
-        tooltip.className = 'tutorial-tooltip ' + step.position;
-        const tooltipW = 220, tooltipH = 80;
-        if (step.position === 'right') {
-          tooltip.style.cssText = 'left:' + (rect.right + 20) + 'px;top:' + (rect.top + rect.height/2 - tooltipH/2) + 'px';
-          arrow.style.cssText = 'left:' + (rect.left - 30) + 'px;top:' + (rect.top + rect.height/2 - 14) + 'px';
-        } else if (step.position === 'left') {
-          tooltip.style.cssText = 'left:' + (rect.left - tooltipW - 20) + 'px;top:' + (rect.top + rect.height/2 - tooltipH/2) + 'px';
-          arrow.style.cssText = 'left:' + (rect.right + 10) + 'px;top:' + (rect.top + rect.height/2 - 14) + 'px';
-        } else if (step.position === 'top') {
-          tooltip.style.cssText = 'left:' + (rect.left + rect.width/2 - tooltipW/2) + 'px;top:' + (rect.bottom + 20) + 'px';
-          arrow.style.cssText = 'left:' + (rect.left + rect.width/2 - 14) + 'px;top:' + (rect.top - 40) + 'px';
-        } else {
-          tooltip.style.cssText = 'left:' + (rect.left + rect.width/2 - tooltipW/2) + 'px;top:' + (rect.top - tooltipH - 20) + 'px';
-          arrow.style.cssText = 'left:' + (rect.left + rect.width/2 - 14) + 'px;top:' + (rect.bottom + 10) + 'px';
-        }
-        progress.innerHTML = this.steps.map((_, i) =>
-          '<div class="tutorial-dot ' + (i < this.currentStep ? 'done' : i === this.currentStep ? 'active' : '') + '"></div>'
-        ).join('');
-        console.log('[Tutorial] Waiting for:', step.waitFor);
-      },
-      advance: function(waitFor) {
-        if (!this.active) return;
-        const step = this.steps[this.currentStep];
-        if (!step) return;
-        if (step.waitFor !== waitFor) {
-          console.log('[Tutorial] Got event:', waitFor, 'but expecting:', step.waitFor, '- ignored');
-          return;
-        }
-        console.log('[Tutorial] Step', this.currentStep, 'done with event:', waitFor);
-        this.currentStep++;
-        this.showStep();
+      ];
+
+      var active = false;
+      var currentStep = 0;
+      var STORAGE_KEY = 'drone_…e_v3';
+
+      // DOM refs
+      var panelTop, panelLeft, panelRight, panelBottom;
+      var highlight, tooltip, skipBtn, progressDots, finger;
+
+      function createElements() {
+        destroyElements();
+        panelTop    = el('div', 'tut-panel tut-panel-top');
+        panelLeft   = el('div', 'tut-panel tut-panel-left');
+        panelRight  = el('div', 'tut-panel tut-panel-right');
+        panelBottom = el('div', 'tut-panel tut-panel-bottom');
+        highlight   = el('div', 'tut-highlight');
+        tooltip     = el('div', 'tut-tooltip');
+        tooltip.innerHTML = '<div class="tut-tooltip-text"></div>';
+        skipBtn     = el('button', 'tut-skip');
+        skipBtn.innerHTML = '跳過教學';
+        skipBtn.onclick = skip;
+        progressDots = el('div', 'tut-progress');
+        finger      = el('div', 'tut-finger');
+        finger.innerHTML = '&#x1F446;';
+        document.body.appendChild(panelTop);
+        document.body.appendChild(panelLeft);
+        document.body.appendChild(panelRight);
+        document.body.appendChild(panelBottom);
+        document.body.appendChild(highlight);
+        document.body.appendChild(tooltip);
+        document.body.appendChild(skipBtn);
+        document.body.appendChild(progressDots);
+        document.body.appendChild(finger);
       }
-    };
-    window.Tutorial = Tutorial;
-    const TUTORIAL_KEY = 'drone_tutorial_done';
+
+      function el(tag, cls) {
+        var d = document.createElement(tag);
+        d.className = cls;
+        return d;
+      }
+
+      function destroyElements() {
+        var sel = '.tut-panel, .tut-highlight, .tut-tooltip, .tut-skip, .tut-progress, .tut-finger';
+        var list = document.querySelectorAll(sel);
+        list.forEach(function(e) { if (e.parentNode) e.parentNode.removeChild(e); });
+        panelTop = panelLeft = panelRight = panelBottom = highlight = tooltip = skipBtn = progressDots = finger = null;
+      }
+
+      function positionPanels(rect) {
+        var W = window.innerWidth;
+        var H = window.innerHeight;
+        var pad = 6;
+        panelTop.style.cssText    = 'top:0;left:0;width:' + W + 'px;height:' + (rect.top - pad) + 'px';
+        panelLeft.style.cssText  = 'top:' + (rect.top - pad) + 'px;left:0;width:' + (rect.left - pad) + 'px;height:' + (rect.height + pad*2) + 'px';
+        panelRight.style.cssText = 'top:' + (rect.top - pad) + 'px;left:' + (rect.right + pad) + 'px;width:' + (W - rect.right - pad) + 'px;height:' + (rect.height + pad*2) + 'px';
+        panelBottom.style.cssText = 'top:' + (rect.bottom + pad) + 'px;left:0;width:' + W + 'px;height:' + (H - rect.bottom - pad) + 'px';
+      }
+
+      function positionHighlight(rect) {
+        var pad = 6;
+        highlight.style.cssText = 'left:' + (rect.left - pad) + 'px;top:' + (rect.top - pad) + 'px;width:' + (rect.width + pad*2) + 'px;height:' + (rect.height + pad*2) + 'px';
+      }
+
+      function positionFinger(rect) {
+        finger.style.cssText = 'left:' + (rect.left + rect.width/2) + 'px;top:' + (rect.bottom + 18) + 'px';
+      }
+
+      function positionTooltip(rect, step) {
+        var pad = 6;
+        var ttW = 260, ttH = 70;
+        tooltip.style.cssText = 'left:' + (rect.left + rect.width/2 - ttW/2) + 'px;top:' + (rect.bottom + pad + 50) + 'px';
+        tooltip.querySelector('.tut-tooltip-text').textContent = step.text;
+      }
+
+      function updateProgress() {
+        progressDots.innerHTML = STEPS.map(function(_, i) {
+          var cls = 'tut-dot' + (i < currentStep ? ' tut-dot-done' : i === currentStep ? ' tut-dot-active' : '');
+          return '<div class="' + cls + '"></div>';
+        }).join('');
+        progressDots.style.cssText = 'left:20px;bottom:20px';
+      }
+
+      function waitForElement(selector, maxRetries) {
+        return new Promise(function(resolve) {
+          var e = document.querySelector(selector);
+          if (e) { resolve(e); return; }
+          var count = 0;
+          var iv = setInterval(function() {
+            e = document.querySelector(selector);
+            if (e || ++count >= maxRetries) { clearInterval(iv); resolve(e); }
+          }, 100);
+        });
+      }
+
+      function showStep() {
+        if (!active) return;
+        if (currentStep >= STEPS.length) { complete(); return; }
+
+        var step = STEPS[currentStep];
+        console.log('[Tutorial] showStep', currentStep, 'target:', step.target);
+
+        waitForElement(step.target, 30).then(function(target) {
+          if (!target) {
+            console.warn('[Tutorial] target not found:', step.target, '- advancing');
+            currentStep++;
+            showStep();
+            return;
+          }
+          var rect = target.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) {
+            setTimeout(showStep.bind(this), 200);
+            return;
+          }
+          positionPanels(rect);
+          positionHighlight(rect);
+          positionFinger(rect);
+          positionTooltip(rect, step);
+          updateProgress();
+          console.log('[Tutorial] Waiting for:', step.waitFor);
+        });
+      }
+
+      function start() {
+        if (localStorage.getItem(STORAGE_KEY)) { console.log('[Tutorial] Already done'); return; }
+        if (active) { console.warn('[Tutorial] Already active'); return; }
+        active = true;
+        currentStep = 0;
+        createElements();
+        showStep();
+        console.log('[Tutorial] Started');
+      }
+
+      function reset() {
+        console.log('[Tutorial] Reset');
+        localStorage.removeItem(STORAGE_KEY);
+        destroyElements();
+        active = false;
+        currentStep = 0;
+        start();
+      }
+
+      function skip() {
+        console.log('[Tutorial] Skipped');
+        complete();
+      }
+
+      function complete() {
+        active = false;
+        localStorage.setItem(STORAGE_KEY, 'true');
+        destroyElements();
+        console.log('[Tutorial] Completed');
+      }
+
+      function advance(event) {
+        if (!active) return;
+        var step = STEPS[currentStep];
+        if (!step) return;
+        if (step.waitFor !== event) {
+          console.log('[Tutorial] advance - got', event, 'expecting', step.waitFor, '- ignored');
+          return;
+        }
+        console.log('[Tutorial] Step', currentStep, 'done with:', event);
+        currentStep++;
+        showStep();
+      }
+
+      // Resize handler
+      window.addEventListener('resize', function() {
+        if (active && currentStep < STEPS.length) showStep();
+      });
+
+      return {
+        start: start, reset: reset, skip: skip, complete: complete,
+        showStep: showStep, advance: advance,
+        get STEPS() { return STEPS; },
+        get active() { return active; },
+        get currentStep() { return currentStep; }
+      };
+    })();
+
+    var TUTORIAL_KEY = 'drone_…e_v3';
+
     // ===== Level Data =====
     const LEVELS = [
       { name: '第一關：起飛着陸', hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸', solution: ['drone_takeoff','drone_forward','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 0 }, goal: { x: 3, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }, obstacles: [] },
