@@ -960,56 +960,87 @@
       droneNode = new BABYLON.TransformNode('drone', scene);
       droneMeshes = [];
       propellers = [];
-      
-      // Body
-      const body = BABYLON.MeshBuilder.CreateBox('body', { width: 0.9, height: 0.3, depth: 0.9 }, scene);
+
+      // ── Tello-style body: white, flat square ──
+      const body = BABYLON.MeshBuilder.CreateBox('body', { width: 1.0, height: 0.18, depth: 0.7 }, scene);
       body.parent = droneNode;
       const bodyMat = new BABYLON.StandardMaterial('bodyMat', scene);
-      bodyMat.diffuseColor = new BABYLON.Color3(0.25, 0.35, 0.45);
-      bodyMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+      bodyMat.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.95);  // near-white
+      bodyMat.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
       body.material = bodyMat;
       droneMeshes.push(body);
-      
+
+      // ── 4 short black arms at corners ──
       const armMat = new BABYLON.StandardMaterial('armMat', scene);
-      armMat.diffuseColor = new BABYLON.Color3(0.18, 0.2, 0.25);
-      
-      const armPositions = [{ x: 0.7, z: 0.7 }, { x: -0.7, z: 0.7 }, { x: 0.7, z: -0.7 }, { x: -0.7, z: -0.7 }];
-      
+      armMat.diffuseColor = new BABYLON.Color3(0.12, 0.12, 0.15);
+      // Tello arm positions: diagonal from body center
+      const armPositions = [
+        { x:  0.55, z:  0.35 },  // front-right
+        { x: -0.55, z:  0.35 },  // front-left
+        { x:  0.55, z: -0.35 },  // back-right
+        { x: -0.55, z: -0.35 },  // back-left
+      ];
+
       armPositions.forEach((pos, i) => {
-        const arm = BABYLON.MeshBuilder.CreateBox('arm' + i, { width: 0.1, height: 0.08, depth: 0.7 }, scene);
-        arm.position = new BABYLON.Vector3(pos.x, 0, pos.z);
+        // Short arm (thin black bar extending outward from body corner)
+        const arm = BABYLON.MeshBuilder.CreateBox('arm' + i, { width: 0.28, height: 0.05, depth: 0.05 }, scene);
+        arm.position = new BABYLON.Vector3(pos.x, -0.03, pos.z);
         arm.rotation.y = Math.atan2(pos.x, pos.z);
         arm.parent = droneNode;
         arm.material = armMat;
         droneMeshes.push(arm);
-        
-        const motor = BABYLON.MeshBuilder.CreateCylinder('motor' + i, { height: 0.15, diameter: 0.25 }, scene);
-        motor.position = new BABYLON.Vector3(pos.x * 1.1, 0.12, pos.z * 1.1);
+
+        // Black motor housing on arm tip
+        const motor = BABYLON.MeshBuilder.CreateCylinder('motor' + i, { height: 0.12, diameter: 0.18 }, scene);
+        motor.position = new BABYLON.Vector3(pos.x * 1.15, 0.01, pos.z * 1.15);
         motor.parent = droneNode;
         const motorMat = new BABYLON.StandardMaterial('motorMat', scene);
-        motorMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.18);
+        motorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.12);
         motor.material = motorMat;
         droneMeshes.push(motor);
-        
-        // Propeller
-        const prop = BABYLON.MeshBuilder.CreateCylinder('prop' + i, { height: 0.02, diameter: 0.6 }, scene);
-        prop.position = new BABYLON.Vector3(pos.x * 1.1, 0.22, pos.z * 1.1);
+
+        // Gray propeller disc on top of motor
+        const prop = BABYLON.MeshBuilder.CreateCylinder('prop' + i, { height: 0.02, diameter: 0.55 }, scene);
+        prop.position = new BABYLON.Vector3(pos.x * 1.15, 0.09, pos.z * 1.15);
         prop.parent = droneNode;
         const propMat = new BABYLON.StandardMaterial('propMat', scene);
-        propMat.diffuseColor = new BABYLON.Color3(0.6, 0.6, 0.65);
-        propMat.specularColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+        propMat.diffuseColor = new BABYLON.Color3(0.55, 0.55, 0.58);
+        propMat.specularColor = new BABYLON.Color3(0.6, 0.6, 0.6);
         prop.material = propMat;
         propellers.push(prop);
         droneMeshes.push(prop);
       });
-      
-      // LED
-      const led = BABYLON.MeshBuilder.CreateSphere('led', { diameter: 0.15 }, scene);
-      led.position = new BABYLON.Vector3(0, 0.18, -0.5);
+
+      // ── Front camera lens: black cylinder protruding ──
+      const camera = BABYLON.MeshBuilder.CreateCylinder('camera', { height: 0.1, diameter: 0.12 }, scene);
+      camera.rotation.x = Math.PI / 2;
+      camera.position = new BABYLON.Vector3(0, -0.02, 0.38);
+      camera.parent = droneNode;
+      const camMat = new BABYLON.StandardMaterial('camMat', scene);
+      camMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.1);
+      camMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+      camera.material = camMat;
+      droneMeshes.push(camera);
+
+      // ── Bottom landing legs: 2 black bars ──
+      const legMat = new BABYLON.StandardMaterial('legMat', scene);
+      legMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.12);
+      const legPositions = [{ x: 0.25, z: 0 }, { x: -0.25, z: 0 }];
+      legPositions.forEach((lp, i) => {
+        const leg = BABYLON.MeshBuilder.CreateCylinder('leg' + i, { height: 0.35, diameter: 0.04 }, scene);
+        leg.position = new BABYLON.Vector3(lp.x, -0.27, lp.z);
+        leg.parent = droneNode;
+        leg.material = legMat;
+        droneMeshes.push(leg);
+      });
+
+      // ── Small status LED (green glow on top) ──
+      const led = BABYLON.MeshBuilder.CreateSphere('led', { diameter: 0.1 }, scene);
+      led.position = new BABYLON.Vector3(0.25, 0.12, -0.2);
       led.parent = droneNode;
       const ledMat = new BABYLON.StandardMaterial('ledMat', scene);
-      ledMat.diffuseColor = new BABYLON.Color3(0.2, 0.9, 0.3);
-      ledMat.emissiveColor = new BABYLON.Color3(0.2, 0.9, 0.3);
+      ledMat.diffuseColor = new BABYLON.Color3(0.15, 0.9, 0.25);
+      ledMat.emissiveColor = new BABYLON.Color3(0.15, 0.9, 0.25);
       led.material = ledMat;
       droneMeshes.push(led);
       
