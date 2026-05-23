@@ -268,18 +268,24 @@
     #blockly-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     #blocklyDiv { flex: 1; height: 100%; overflow: auto; }
     
-    /* Blockly toolbox category highlight fix */
+    /* Blockly toolbox category highlight fix - comprehensive reset */
+    .blocklyToolboxCategory {
+      display: block !important;
+    }
     .blocklyToolboxCategory .blocklyTreeRow {
+      display: flex !important;
+      align-items: center !important;
       padding: 8px 12px !important;
       border-radius: 8px;
-      margin: 2px 0;
+      margin: 2px 4px !important;
+      height: auto !important;
+      line-height: normal !important;
       transition: background-color 0.2s;
     }
     .blocklyToolboxCategory .blocklyTreeRow:hover {
       background-color: rgba(255,255,255,0.1) !important;
     }
-    .blocklyToolboxCategory .blocklyTreeRow.blocklyTreeSelected,
-    .blocklyToolboxCategory[expanded="true"] .blocklyTreeRow {
+    .blocklyToolboxCategory .blocklyTreeRow.blocklyTreeSelected {
       background-color: var(--catColour, #4A90D9) !important;
     }
     .blocklyToolboxCategory .blocklyTreeIcon {
@@ -289,6 +295,12 @@
       color: white !important;
       font-size: 14px;
       font-weight: 600;
+      flex: 1;
+    }
+    .blocklyToolboxCategory .blocklyTreeRowContentContainer {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px;
     }
     
     #status-bar {
