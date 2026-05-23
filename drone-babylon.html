@@ -149,6 +149,57 @@
     .info-card.success { border-color: var(--success); }
     .info-card .val.success { color: var(--success); }
     
+    /* ===== Tello Telemetry HUD ===== */
+    #tello-hud {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(10, 18, 32, 0.85);
+      border-radius: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(79, 195, 247, 0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      z-index: 50;
+      min-width: 160px;
+      backdrop-filter: blur(8px);
+    }
+    #tello-hud h4 {
+      color: #4fc3f7;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-align: center;
+      border-bottom: 1px solid rgba(79, 195, 247, 0.2);
+      padding-bottom: 6px;
+    }
+    .tello-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 13px;
+      color: #ccc;
+    }
+    .tello-row .icon { font-size: 14px; }
+    .tello-row .label { color: #888; font-size: 11px; }
+    .tello-row .value { font-weight: 700; color: #fff; font-family: 'Courier New', monospace; }
+    .tello-row.battery .value { color: #50C878; }
+    .tello-row.battery.warning .value { color: #F5A623; }
+    .tello-row.battery.critical .value { color: #F56C6C; animation: blink 0.8s infinite; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .tello-row.battery.critical { animation: rowBlink 0.8s infinite; }
+    @keyframes rowBlink { 0%,100% { background: transparent; } 50% { background: rgba(245, 108, 108, 0.1); } }
+    .signal-bars { display: flex; gap: 2px; }
+    .signal-bar { width: 4px; border-radius: 1px; background: #333; }
+    .signal-bar.active { background: #50C878; }
+    .signal-bar:nth-child(1) { height: 6px; }
+    .signal-bar:nth-child(2) { height: 9px; }
+    .signal-bar:nth-child(3) { height: 12px; }
+    .signal-bar:nth-child(4) { height: 15px; }
+    .signal-bar:nth-child(5) { height: 18px; }
+    .tello-divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 6px 0; }
+    
     #goal-hud {
       position: absolute;
       bottom: 16px;
@@ -415,6 +466,43 @@
         <div id="goal-hud">🏁 終點</div>
         <div id="position-hud">X: <span id="pos-x">0</span> Z: <span id="pos-z">0</span></div>
         
+        <!-- Tello Telemetry HUD -->
+        <div id="tello-hud">
+          <h4>📡 Tello 狀態</h4>
+          <div class="tello-row battery">
+            <span class="icon">🔋</span>
+            <span class="label">電量</span>
+            <span class="value" id="hud-battery">100%</span>
+          </div>
+          <div class="tello-row">
+            <span class="icon">📏</span>
+            <span class="label">高度</span>
+            <span class="value" id="hud-height">0 cm</span>
+          </div>
+          <div class="tello-row">
+            <span class="icon">🌡️</span>
+            <span class="label">溫度</span>
+            <span class="value" id="hud-temp">28°C</span>
+          </div>
+          <hr class="tello-divider"/>
+          <div class="tello-row">
+            <span class="icon">⏱️</span>
+            <span class="label">飛行時間</span>
+            <span class="value" id="hud-time">00:00</span>
+          </div>
+          <div class="tello-row">
+            <span class="icon">📡</span>
+            <span class="label">訊號</span>
+            <div class="signal-bars">
+              <div class="signal-bar active"></div>
+              <div class="signal-bar active"></div>
+              <div class="signal-bar active"></div>
+              <div class="signal-bar active"></div>
+              <div class="signal-bar active"></div>
+            </div>
+          </div>
+        </div>
+        
         <div id="win-modal">
           <div id="win-stars">⭐⭐⭐</div>
           <h2 id="win-title">過關了！</h2>
@@ -500,6 +588,13 @@
     let targetPropSpeed = 0;
     let isDarkTheme = true;
     let zoomLevel = 100;
+    
+    // ===== Tello Telemetry State =====
+    let telloBattery = 100;
+    let telloFlightTime = 0;
+    let flightStartTime = null;
+    let hudIntervalId = null;
+    
     // ===== Level Data =====
     const LEVELS = [
       { name: '第一關：起飛着陸', hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸', solution: ['drone_takeoff','drone_forward','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 0 }, goal: { x: 3, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }, obstacles: [] },
@@ -1022,6 +1117,7 @@
       isFlying = false;
       targetPropSpeed = 0;
       updateDroneUI('😴', '待機');
+      resetTelemetry();
     }
     
     async function executeBlock(block) {
@@ -1084,6 +1180,7 @@
     async function animateTakeoff() {
       if (!isFlying) {
         isFlying = true;
+        flightStartTime = Date.now(); // Start flight timer
         targetPropSpeed = 0.25; // Faster spin for takeoff
         updateDroneUI('😀', '起飛中');
         createParticleEffect(droneNode.position.x, droneNode.position.z, 'takeoff');
@@ -1377,10 +1474,59 @@
       }
     });
     
+    // ===== Tello Telemetry HUD =====
+    function initHUD() {
+      if (hudIntervalId) clearInterval(hudIntervalId);
+      hudIntervalId = setInterval(updateHUD, 100);
+    }
+    
+    function updateHUD() {
+      // Battery: decreases 0.1% per second (every 100ms = 0.01%)
+      telloBattery = Math.max(0, telloBattery - 0.01);
+      const batteryEl = document.getElementById('hud-battery');
+      const batteryRow = batteryEl.closest('.tello-row');
+      batteryEl.textContent = Math.round(telloBattery) + '%';
+      
+      // Battery color states
+      batteryRow.classList.remove('warning', 'critical');
+      if (telloBattery < 20) {
+        batteryRow.classList.add('critical');
+      } else if (telloBattery < 40) {
+        batteryRow.classList.add('warning');
+      }
+      
+      // Height: convert Y position to cm (Y * 100)
+      const heightCm = Math.round(droneY * 100);
+      document.getElementById('hud-height').textContent = heightCm + ' cm';
+      
+      // Temperature: 28°C base + random float ±2°C
+      const temp = 28 + (Math.random() * 4 - 2);
+      document.getElementById('hud-temp').textContent = temp.toFixed(1) + '°C';
+      
+      // Flight time (mm:ss)
+      if (isFlying && flightStartTime) {
+        const elapsed = Math.floor((Date.now() - flightStartTime) / 1000);
+        const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const secs = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('hud-time').textContent = mins + ':' + secs;
+      }
+    }
+    
+    function resetTelemetry() {
+      telloBattery = 100;
+      telloFlightTime = 0;
+      flightStartTime = null;
+      document.getElementById('hud-time').textContent = '00:00';
+      const batteryEl = document.getElementById('hud-battery');
+      batteryEl.textContent = '100%';
+      batteryEl.closest('.tello-row').classList.remove('warning', 'critical');
+    }
+    
     window.addEventListener('load', () => {
       initBabylon();
       initBlockly();
       loadLevel(0);
+      initHUD();
       
       document.body.addEventListener('click', () => {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
