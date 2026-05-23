@@ -205,9 +205,8 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.7);
-      z-index: 1000;
+      z-index: 1001;
       display: none;
-      pointer-events: none;
     }
     #tutorial-overlay.active { display: block; }
     #tutorial-spotlight {
@@ -216,7 +215,6 @@
       box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
       transition: all 0.4s ease;
       z-index: 1001;
-      pointer-events: none;
     }
     #tutorial-tooltip {
       position: absolute;
@@ -230,7 +228,6 @@
       box-shadow: 0 8px 30px rgba(0,0,0,0.4);
       z-index: 1002;
       line-height: 1.5;
-      pointer-events: none;
     }
     #tutorial-tooltip::before {
       content: '';
@@ -689,6 +686,7 @@
 // ===== Onboarding Tutorial State =====
     const TUTORIAL_KEY = 'drone_tutorial_done_v2';
     let tutorialStep = 0;
+    let tutorialDone = false;
     let tutorialActive = false;
 
     const TUTORIAL_STEPS = [
@@ -720,9 +718,10 @@
 
     function startTutorial() {
       const saved = localStorage.getItem(TUTORIAL_KEY);
-      if (saved) return;
+      if (saved) { console.log("[Tutorial] localStorage says done"); return; }
       tutorialStep = 0;
       tutorialActive = true;
+      alert('Tutorial starting! Tutorial_KEY=');
       console.log('[Tutorial] Starting');
       showTutorialStep();
     }
