@@ -1242,12 +1242,12 @@
             }, 200);
           }
           // Tutorial: check if takeoff block was added
-          if (block && block.type === 'drone_takeoff') advanceTutorial('blockAddTakeoff');
+          if (tutorialActive && block && block.type === 'drone_takeoff' && block.getParent()) advanceTutorial('blockAddTakeoff');
           // Tutorial: check if land block was added
-          if (block && block.type === 'drone_land') advanceTutorial('blockAddLand');
+          if (tutorialActive && block && block.type === 'drone_land' && block.getParent()) advanceTutorial('blockAddLand');
         }
         // Tutorial: category click
-        if (e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
+        if (tutorialActive && e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
           advanceTutorial('categoryClick');
         }
       });
@@ -1264,7 +1264,7 @@
     // ===== Execute Program =====
     async function runProgram() {
       if (isExecuting) return;
-      advanceTutorial('runClick');
+      if (tutorialActive) advanceTutorial('runClick');
       const allBlocks = workspace.getAllBlocks();
       if (allBlocks.length === 0) { setStatus('fail', '請先加入積木！'); return; }
       
