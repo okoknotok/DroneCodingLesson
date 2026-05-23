@@ -207,6 +207,7 @@
       background: rgba(0,0,0,0.7);
       z-index: 1000;
       display: none;
+      pointer-events: none;
     }
     #tutorial-overlay.active { display: block; }
     #tutorial-spotlight {
@@ -215,6 +216,8 @@
       box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
       transition: all 0.4s ease;
       z-index: 1001;
+      pointer-events: auto;
+      cursor: pointer;
     }
     #tutorial-tooltip {
       position: absolute;
@@ -258,6 +261,7 @@
       cursor: pointer;
       font-size: 12px;
       z-index: 1004;
+      pointer-events: auto;
     }
     #tutorial-skip:hover { background: rgba(255,255,255,0.25); color: white; }
     #tutorial-progress {
@@ -737,6 +741,14 @@
       
       overlay.classList.add('active');
       spotlight.style.cssText = `left:${rect.left-8}px;top:${rect.top-8}px;width:${rect.width+16}px;height:${rect.height+16}px;`;
+      spotlight.onclick = () => {
+        const step = TUTORIAL_STEPS[tutorialStep];
+        if (step.waitFor === 'categoryClick') {
+          const cat = document.querySelector(step.target);
+          if (cat) cat.click();
+          advanceTutorial(step.waitFor);
+        }
+      };
       
       document.getElementById('tutorial-text').innerHTML = step.text.replace(/\n/g, '<br>');
       
