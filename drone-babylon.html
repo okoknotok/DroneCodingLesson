@@ -1641,7 +1641,7 @@
       
       // Start tutorial for first level
       if (index === 0 && !localStorage.getItem(TUTORIAL_KEY)) {
-        setTimeout(startTutorial, 800);
+        setTimeout(Tutorial.start.bind(Tutorial), 800);
       }
       setStatus('ready', '準備就緒');
     }
