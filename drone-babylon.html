@@ -200,106 +200,36 @@
     .signal-bar:nth-child(5) { height: 18px; }
     .tello-divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 6px 0; }
     
-    /* ===== Onboarding Tutorial ===== */
-    #tutorial-overlay {
+    /* ===== Welcome Modal ===== */
+    #welcome-modal {
       position: fixed;
       inset: 0;
-      z-index: 999;
-      display: none;
-      pointer-events: none;
-    }
-    #tutorial-overlay.active { display: block; }
-    #tutorial-overlay.active * {
-      pointer-events: auto;
-    }
-    #tutorial-spotlight {
-      position: absolute;
-      border-radius: 12px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.75);
-      z-index: 1000;
-      pointer-events: none;
-      border: 3px solid #667eea;
-    }
-    #tutorial-tooltip {
-      position: absolute;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      padding: 16px 20px;
-      border-radius: 16px;
-      font-size: 15px;
-      font-weight: 600;
-      max-width: 260px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-      z-index: 1001;
-      line-height: 1.6;
-    }
-    #tutorial-tooltip::before {
-      content: '';
-      position: absolute;
-      width: 0; height: 0;
-      border: 10px solid transparent;
-    }
-    #tutorial-tooltip.top::before { bottom: -20px; left: 50%; transform: translateX(-50%); border-top-color: #667eea; }
-    #tutorial-tooltip.bottom::before { top: -20px; left: 50%; transform: translateX(-50%); border-bottom-color: #667eea; }
-    #tutorial-tooltip.left::before { right: -20px; top: 50%; transform: translateY(-50%); border-left-color: #667eea; }
-    #tutorial-tooltip.right::before { left: -20px; top: 50%; transform: translateY(-50%); border-right-color: #667eea; }
-    #tutorial-arrow {
-      position: absolute;
-      font-size: 32px;
-      z-index: 1002;
-      animation: bounce 0.6s infinite alternate;
-    }
-    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
-    #tutorial-skip {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: #ccc;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 12px;
-      z-index: 1003;
-    }
-    #tutorial-skip:hover { background: rgba(255,255,255,0.25); color: white; }
-    #tutorial-progress {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      gap: 6px;
-      z-index: 1003;
-    }
-    .tutorial-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.3);
-      transition: background 0.3s;
-    }
-    .tutorial-dot.active { background: #667eea; }
-    .tutorial-dot.done { background: #50C878; }
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(67, 160, 71, 0.9);
-      padding: 10px 20px;
-      border-radius: 25px;
-      color: white;
-      font-weight: 700;
-      font-size: 14px;
+      background: rgba(0,0,0,0.82);
       display: flex;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 20px rgba(67, 160, 71, 0.4);
-      animation: goalPulse 1.5s infinite;
+      justify-content: center;
+      z-index: 999;
     }
-    @keyframes goalPulse {
-      0%, 100% { transform: translateX(-50%) scale(1); }
-      50% { transform: translateX(-50%) scale(1.03); }
+    #welcome-modal.hidden { display: none; }
+    .welcome-box {
+      background: linear-gradient(135deg, #1a1f35, #252d4a);
+      border: 2px solid #667eea;
+      border-radius: 20px;
+      padding: 36px 40px;
+      max-width: 460px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
     }
-    
+    .welcome-box h2 { font-size: 26px; font-weight: 800; color: white; margin-bottom: 6px; }
+    .welcome-box p { font-size: 14px; color: #aaa; margin-bottom: 28px; }
+    .welcome-step { display: flex; align-items: center; gap: 14px; text-align: left; margin-bottom: 14px; }
+    .step-num { width: 32px; height: 32px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: white; flex-shrink: 0; }
+    .step-desc { font-size: 15px; color: #ddd; }
+    .step-desc strong { color: #667eea; }
+    .welcome-start-btn { background: linear-gradient(135deg, #667eea, #764ba2); border: none; color: white; padding: 14px 40px; border-radius: 30px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: transform 0.15s, box-shadow 0.15s; }
+    .welcome-start-btn:hover { transform: scale(1.04); box-shadow: 0 8px 25px rgba(102,126,234,0.5); }
+
     #win-modal {
       position: absolute;
       inset: 0;
@@ -490,15 +420,32 @@
   </style>
 </head>
 <body>
-  <!-- Onboarding Tutorial -->
-  <div id="tutorial-overlay"></div>
-  <div id="tutorial-spotlight"></div>
-  <div id="tutorial-tooltip">
-    <div id="tutorial-text"></div>
+  <!-- Welcome Modal -->
+  <div id="welcome-modal">
+    <div class="welcome-box">
+      <h2>🚁 無人機指令營</h2>
+      <p>第一次玩？了解點樣玩啦！</p>
+      <div style="text-align:left">
+        <div class="welcome-step">
+          <div class="step-num">1</div>
+          <div class="step-desc">揀<strong>左邊</strong>嘅分類搵積木</div>
+        </div>
+        <div class="welcome-step">
+          <div class="step-num">2</div>
+          <div class="step-desc">拖積木去<strong>中間</strong>工作區</div>
+        </div>
+        <div class="welcome-step">
+          <div class="step-num">3</div>
+          <div class="step-desc">㩒<strong>執行</strong>睇無人機郁</div>
+        </div>
+        <div class="welcome-step">
+          <div class="step-num">4</div>
+          <div class="step-desc">完成挑戰<strong>過關</strong>！</div>
+        </div>
+      </div>
+      <button class="welcome-start-btn" onclick="closeWelcome()">開始啦 ▶</button>
+    </div>
   </div>
-  <div id="tutorial-arrow">👇</div>
-  <button id="tutorial-skip" onclick="Tutorial.skip()">跳過教學</button>
-  <div id="tutorial-progress"></div>
   
   <div id="top-bar">
     <div id="logo-area">
@@ -518,7 +465,6 @@
       <button class="top-btn theme-toggle" onclick="toggleTheme()">🌙</button>
       <button class="top-btn" onclick="resetScene()">🔄 重置</button>
       <button class="top-btn" onclick="clearBlocks()">🗑️ 清除</button>
-      <button class="top-btn tutorial-reset-btn" onclick="Tutorial.reset()">📖 重新觀看教學</button>
     </div>
   </div>
   
@@ -552,8 +498,7 @@
           </div>
         </div>
         
-        <div id="goal-hud">🏁 終點</div>
-        <div id="position-hud">X: <span id="pos-x">0</span> Z: <span id="pos-z">0</span></div>
+<div id="position-hud">X: <span id="pos-x">0</span> Z: <span id="pos-z">0</span></div>
         
         <!-- Tello Telemetry HUD -->
         <div id="tello-hud">
@@ -684,142 +629,15 @@
     let flightStartTime = null;
     let hudIntervalId = null;
     
-    // ===== Onboarding Tutorial =====
-    // localStorage key: drone_tutorial_done
-    // Public API: window.Tutorial.start(), .reset(), .skip(), .complete()
-    // Debug: window.Tutorial.active, .currentStep, .steps
-    const Tutorial = {
-      active: false,
-      currentStep: 0,
-      steps: [
-        {
-          target: '.blocklyToolboxCategory',
-          text: 'Step 1\nClick the "Move" category',
-          position: 'right',
-          waitFor: 'categoryClick'
-        },
-        {
-          target: '.blocklyFlyout [data-id="drone_takeoff"], .blocklyFlyout [type="drone_takeoff"]',
-          text: 'Step 2\nDrag "Takeoff" block to workspace',
-          position: 'left',
-          waitFor: 'blockAddTakeoff'
-        },
-        {
-          target: '.blocklyFlyout [data-id="drone_land"], .blocklyFlyout [type="drone_land"]',
-          text: 'Step 3\nDrag "Land" block to workspace',
-          position: 'left',
-          waitFor: 'blockAddLand'
-        },
-        {
-          target: '#run-btn',
-          text: 'Step 4\nClick Run to see the drone!',
-          position: 'top',
-          waitFor: 'runClick'
-        }
-      ],
-      start: function() {
-        if (localStorage.getItem(TUTORIAL_KEY)) {
-          console.log('[Tutorial] Already completed, skipping');
-          return;
-        }
-        if (this.active) {
-          console.warn('[Tutorial] Already active, refusing to start');
-          return;
-        }
-        this.active = true;
-        this.currentStep = 0;
-        console.log('[Tutorial] Started');
-        this.showStep();
-      },
-      reset: function() {
-        console.log('[Tutorial] Reset requested');
-        localStorage.removeItem(TUTORIAL_KEY);
-        this.active = false;
-        this.currentStep = 0;
-        document.getElementById('tutorial-overlay').classList.remove('active');
-        document.getElementById('tutorial-spotlight').style.cssText = '';
-        document.getElementById('tutorial-tooltip').style.cssText = '';
-        document.getElementById('tutorial-arrow').style.cssText = '';
-        document.getElementById('tutorial-progress').innerHTML = '';
-        console.log('[Tutorial] State cleared, restarting...');
-        this.start();
-      },
-      skip: function() {
-        console.log('[Tutorial] Skipped by user');
-        this.complete();
-      },
-      complete: function() {
-        this.active = false;
-        localStorage.setItem(TUTORIAL_KEY, 'true');
-        document.getElementById('tutorial-overlay').classList.remove('active');
-        document.getElementById('tutorial-spotlight').style.cssText = '';
-        document.getElementById('tutorial-tooltip').style.cssText = '';
-        document.getElementById('tutorial-arrow').style.cssText = '';
-        document.getElementById('tutorial-progress').innerHTML = '';
-        console.log('[Tutorial] Completed and saved');
-      },
-      showStep: function() {
-        if (this.currentStep >= this.steps.length) {
-          this.complete();
-          return;
-        }
-        const step = this.steps[this.currentStep];
-        const target = document.querySelector(step.target);
-        console.log('[Tutorial] Step', this.currentStep, '- target:', step.target, '- found:', !!target);
-        if (!target) {
-          this.currentStep++;
-          setTimeout(this.showStep.bind(this), 300);
-          return;
-        }
-        const rect = target.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) {
-          setTimeout(this.showStep.bind(this), 300);
-          return;
-        }
-        const overlay = document.getElementById('tutorial-overlay');
-        const spotlight = document.getElementById('tutorial-spotlight');
-        const tooltip = document.getElementById('tutorial-tooltip');
-        const arrow = document.getElementById('tutorial-arrow');
-        const progress = document.getElementById('tutorial-progress');
-        overlay.classList.add('active');
-        const pad = 10;
-        spotlight.style.cssText = 'left:' + (rect.left - pad) + 'px;top:' + (rect.top - pad) + 'px;width:' + (rect.width + pad*2) + 'px;height:' + (rect.height + pad*2) + 'px;';
-        document.getElementById('tutorial-text').innerHTML = step.text.replace(/\n/g, '<br>');
-        tooltip.className = 'tutorial-tooltip ' + step.position;
-        const tooltipW = 220, tooltipH = 80;
-        if (step.position === 'right') {
-          tooltip.style.cssText = 'left:' + (rect.right + 20) + 'px;top:' + (rect.top + rect.height/2 - tooltipH/2) + 'px';
-          arrow.style.cssText = 'left:' + (rect.left - 30) + 'px;top:' + (rect.top + rect.height/2 - 14) + 'px';
-        } else if (step.position === 'left') {
-          tooltip.style.cssText = 'left:' + (rect.left - tooltipW - 20) + 'px;top:' + (rect.top + rect.height/2 - tooltipH/2) + 'px';
-          arrow.style.cssText = 'left:' + (rect.right + 10) + 'px;top:' + (rect.top + rect.height/2 - 14) + 'px';
-        } else if (step.position === 'top') {
-          tooltip.style.cssText = 'left:' + (rect.left + rect.width/2 - tooltipW/2) + 'px;top:' + (rect.bottom + 20) + 'px';
-          arrow.style.cssText = 'left:' + (rect.left + rect.width/2 - 14) + 'px;top:' + (rect.top - 40) + 'px';
-        } else {
-          tooltip.style.cssText = 'left:' + (rect.left + rect.width/2 - tooltipW/2) + 'px;top:' + (rect.top - tooltipH - 20) + 'px';
-          arrow.style.cssText = 'left:' + (rect.left + rect.width/2 - 14) + 'px;top:' + (rect.bottom + 10) + 'px';
-        }
-        progress.innerHTML = this.steps.map((_, i) =>
-          '<div class="tutorial-dot ' + (i < this.currentStep ? 'done' : i === this.currentStep ? 'active' : '') + '"></div>'
-        ).join('');
-        console.log('[Tutorial] Waiting for:', step.waitFor);
-      },
-      advance: function(waitFor) {
-        if (!this.active) return;
-        const step = this.steps[this.currentStep];
-        if (!step) return;
-        if (step.waitFor !== waitFor) {
-          console.log('[Tutorial] Got event:', waitFor, 'but expecting:', step.waitFor, '- ignored');
-          return;
-        }
-        console.log('[Tutorial] Step', this.currentStep, 'done with event:', waitFor);
-        this.currentStep++;
-        this.showStep();
-      }
-    };
-    window.Tutorial = Tutorial;
-    const TUTORIAL_KEY = 'drone_tutorial_done';
+    // ===== Welcome Modal =====
+    const WELCOME_KEY = 'drone_welcome_done';
+    function closeWelcome() {
+      document.getElementById('welcome-modal').classList.add('hidden');
+      localStorage.setItem(WELCOME_KEY, 'true');
+    }
+    if (localStorage.getItem(WELCOME_KEY)) {
+      document.getElementById('welcome-modal').classList.add('hidden');
+    }
     // ===== Level Data =====
     const LEVELS = [
       { name: '第一關：起飛着陸', hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸', solution: ['drone_takeoff','drone_forward','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 0 }, goal: { x: 3, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }, obstacles: [] },
@@ -1279,14 +1097,7 @@
               if (block.pathObject) block.pathObject.style.filter = '';
             }, 200);
           }
-          // Tutorial: check if takeoff block was added
-          if (Tutorial.active && block && block.type === 'drone_takeoff' && block.getParent()) Tutorial.advance('blockAddTakeoff');
-          // Tutorial: check if land block was added
-          if (Tutorial.active && block && block.type === 'drone_land' && block.getParent()) Tutorial.advance('blockAddLand');
         }
-        // Tutorial: category click
-        if (Tutorial.active && e.type === Blockly.Events.TOOLBOX_ITEM_SELECTED) {
-          Tutorial.advance('categoryClick');
         }
       });
     }
@@ -1302,7 +1113,6 @@
     // ===== Execute Program =====
     async function runProgram() {
       if (isExecuting) return;
-      if (Tutorial.active) Tutorial.advance('runClick');
       const allBlocks = workspace.getAllBlocks();
       if (allBlocks.length === 0) { setStatus('fail', '請先加入積木！'); return; }
       
@@ -1641,9 +1451,7 @@
       
       workspace.clear();
       
-      // Start tutorial for first level
       if (index === 0 && !localStorage.getItem(TUTORIAL_KEY)) {
-        setTimeout(Tutorial.start.bind(Tutorial), 800);
       }
       setStatus('ready', '準備就緒');
     }
@@ -1761,10 +1569,7 @@
       batteryEl.closest('.tello-row').classList.remove('warning', 'critical');
     }
     
-    // Reposition tutorial on resize
     window.addEventListener('resize', () => {
-      if (Tutorial.active) {
-        Tutorial.showStep();
       }
     });
     
