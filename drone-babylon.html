@@ -443,7 +443,7 @@
           <div class="step-desc">完成挑戰<strong>過關</strong>！</div>
         </div>
       </div>
-      <button class="welcome-start-btn" onclick="closeWelcome()">開始啦 ▶</button>
+      <button type="button" class="welcome-start-btn" onclick="closeWelcome();return false;">開始啦 ▶</button>
     </div>
   </div>
   
@@ -632,8 +632,10 @@
     // ===== Welcome Modal =====
     const WELCOME_KEY = 'drone_welcome_done';
     function closeWelcome() {
-      document.getElementById('welcome-modal').classList.add('hidden');
-      localStorage.setItem(WELCOME_KEY, 'true');
+      console.log('closeWelcome called');
+      var modal = document.getElementById('welcome-modal');
+      if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
+      try { localStorage.setItem(WELCOME_KEY, 'true'); } catch(e) { console.log('localStorage error:', e); }
     }
     if (localStorage.getItem(WELCOME_KEY)) {
       document.getElementById('welcome-modal').classList.add('hidden');
