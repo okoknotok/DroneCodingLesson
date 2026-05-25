@@ -423,27 +423,27 @@
   <!-- Welcome Modal -->
   <div id="welcome-modal">
     <div class="welcome-box">
-      <h2>Drone Command Camp</h2>
-      <p>First time? Here's how to play!</p>
+      <h2>🚁 無人機指令營</h2>
+      <p>第一次玩？睇下點玩啦！</p>
       <div style="text-align:left">
         <div class="welcome-step">
           <div class="step-num">1</div>
-          <div class="step-desc">Select <strong>left</strong> category</div>
+          <div class="step-desc">揀<strong>左邊</strong>嘅分類搵積木</div>
         </div>
         <div class="welcome-step">
           <div class="step-num">2</div>
-          <div class="step-desc">Drag blocks to <strong>center</strong> workspace</div>
+          <div class="step-desc">拖積木去<strong>中間</strong>工作區</div>
         </div>
         <div class="welcome-step">
           <div class="step-num">3</div>
-          <div class="step-desc">Press <strong>RUN</strong> to fly</div>
+          <div class="step-desc">撳<strong>執行</strong>睇無人機郁</div>
         </div>
         <div class="welcome-step">
           <div class="step-num">4</div>
-          <div class="step-desc">Complete <strong>all challenges</strong>!</div>
+          <div class="step-desc">完成所有挑戰過關！</div>
         </div>
       </div>
-      <button type="button" class="welcome-start-btn" id="welcome-start">START ▶</button>
+      <button type="button" class="welcome-start-btn" id="welcome-start">開始啦 ▶</button>
     </div>
   </div>
   
@@ -629,20 +629,13 @@
     let flightStartTime = null;
     let hudIntervalId = null;
     
-    const WELCOME_KEY = 'drone_welcome_done';
     function closeWelcome() {
       console.log('closeWelcome called');
       var modal = document.getElementById('welcome-modal');
       if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
-      try { localStorage.setItem(WELCOME_KEY, 'true'); } catch(e) { console.log('localStorage error:', e); }
+
     }
-    if (localStorage.getItem(WELCOME_KEY)) {
-      document.getElementById('welcome-modal').classList.add('hidden');
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-      var startBtn = document.getElementById('welcome-start');
-      if (startBtn) startBtn.addEventListener('click', closeWelcome);
-    });
+document.getElementById('welcome-start').onclick = closeWelcome;
     // ===== Level Data =====
     const LEVELS = [
       { name: '第一關：起飛着陸', hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸', solution: ['drone_takeoff','drone_forward','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 0 }, goal: { x: 3, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }, obstacles: [] },
@@ -1455,8 +1448,7 @@
       
       workspace.clear();
       
-      if (index === 0 && !localStorage.getItem(TUTORIAL_KEY)) {
-      }
+
       setStatus('ready', '準備就緒');
     }
     
