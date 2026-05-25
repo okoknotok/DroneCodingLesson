@@ -443,7 +443,7 @@
           <div class="step-desc">完成挑戰<strong>過關</strong>！</div>
         </div>
       </div>
-      <button type="button" class="welcome-start-btn" onclick="closeWelcome();return false;">開始啦 ▶</button>
+      <button type="button" class="welcome-start-btn" id="welcome-start">開始啦 ▶</button>
     </div>
   </div>
   
@@ -629,7 +629,6 @@
     let flightStartTime = null;
     let hudIntervalId = null;
     
-    // ===== Welcome Modal =====
     const WELCOME_KEY = 'drone_welcome_done';
     function closeWelcome() {
       console.log('closeWelcome called');
@@ -640,6 +639,10 @@
     if (localStorage.getItem(WELCOME_KEY)) {
       document.getElementById('welcome-modal').classList.add('hidden');
     }
+    document.addEventListener('DOMContentLoaded', function() {
+      var startBtn = document.getElementById('welcome-start');
+      if (startBtn) startBtn.addEventListener('click', closeWelcome);
+    });
     // ===== Level Data =====
     const LEVELS = [
       { name: '第一關：起飛着陸', hint: '🎯 目標：讓無人機起飛，前進 3 格，然後着陸！\n\n💡 提示：起飛 → 前進 × 3 → 着陸', solution: ['drone_takeoff','drone_forward','drone_forward','drone_forward','drone_land'], start: { x: -6, z: 0 }, goal: { x: 3, z: 0 }, cameraPos: { alpha: -Math.PI / 2, beta: Math.PI / 3, radius: 18 }, obstacles: [] },
