@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚁 無人機指令營 — 專業版</title>
+  <title>Drone Command Camp — 專業版</title>
   
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
@@ -423,27 +423,27 @@
   <!-- Welcome Modal -->
   <div id="welcome-modal">
     <div class="welcome-box">
-      <h2>🚁 無人機指令營</h2>
-      <p>第一次玩？了解點樣玩啦！</p>
+      <h2>Drone Command Camp</h2>
+      <p>First time? Here's how to play!</p>
       <div style="text-align:left">
         <div class="welcome-step">
           <div class="step-num">1</div>
-          <div class="step-desc">揀<strong>左邊</strong>嘅分類搵積木</div>
+          <div class="step-desc">Select <strong>left</strong> category</div>
         </div>
         <div class="welcome-step">
           <div class="step-num">2</div>
-          <div class="step-desc">拖積木去<strong>中間</strong>工作區</div>
+          <div class="step-desc">Drag blocks to <strong>center</strong> workspace</div>
         </div>
         <div class="welcome-step">
           <div class="step-num">3</div>
-          <div class="step-desc">㩒<strong>執行</strong>睇無人機郁</div>
+          <div class="step-desc">Press <strong>RUN</strong> to fly</div>
         </div>
         <div class="welcome-step">
           <div class="step-num">4</div>
-          <div class="step-desc">完成挑戰<strong>過關</strong>！</div>
+          <div class="step-desc">Complete <strong>all challenges</strong>!</div>
         </div>
       </div>
-      <button type="button" class="welcome-start-btn" id="welcome-start">開始啦 ▶</button>
+      <button type="button" class="welcome-start-btn" id="welcome-start">START ▶</button>
     </div>
   </div>
   
@@ -1103,7 +1103,6 @@
             }, 200);
           }
         }
-        }
       });
     }
     
@@ -1573,10 +1572,7 @@
       batteryEl.textContent = '100%';
       batteryEl.closest('.tello-row').classList.remove('warning', 'critical');
     }
-    
-    window.addEventListener('resize', () => {
-      }
-    });
+    window.addEventListener('resize', () => scene.render());
     
     window.addEventListener('load', () => {
       initBabylon();
