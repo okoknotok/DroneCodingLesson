@@ -2,11 +2,17 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>Drone Blockly - 完整版 v3.3</title>
+<title>Drone Blockly - 完整版 v3.4</title>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://unpkg.com/blockly/blockly.min.js"></script>
 <script src="https://unpkg.com/blockly/msg/zh-hant.js"></script>
 <style>
+  #powerupBar { position: absolute; top: 92px; left: 50%; transform: translateX(-50%); display: none; gap: 8px; z-index: 6; pointer-events: none; }
+  #powerupBar.show { display: flex; }
+  .pwr-chip { background: rgba(10,15,30,0.85); border: 1px solid; border-radius: 10px; padding: 5px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 62px; backdrop-filter: blur(8px); }
+  .pwr-chip .pwr-icon { font-size: 16px; line-height: 1; }
+  .pwr-chip .pwr-bar { width: 48px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
+  .pwr-chip .pwr-fill { height: 100%; transition: width 0.1s linear; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif; background: #0d1421; color: #fff; overflow: hidden; height: 100vh; }
   
@@ -305,9 +311,10 @@
     </div>
     
     <div id="gameInstructions">
-      ⌨️ <b>WASD/方向鍵</b> 移動閃避 &nbsp;·&nbsp; 🖱️ <b>滑鼠左鍵</b> 射擊 <span class="red">紅球</span> &nbsp;·&nbsp; 🟡 撞向金幣
+      ⌨️ <b>WASD/方向鍵</b> 移動 &nbsp;·&nbsp; <b>Shift</b> 加速衝刺 &nbsp;·&nbsp; 🖱️ <b>左鍵</b> 射擊 <span class="red">紅球</span> &nbsp;·&nbsp; 🟡 撞金幣 &nbsp;·&nbsp; ✨ 吃發光道具
     </div>
-    
+
+    <div id="powerupBar"></div>
     <div id="damageFlash"></div>
     <div id="stageFlash"></div>
     <div id="comboPopup"></div>
@@ -429,6 +436,7 @@
 let mode = 'menu';
 
 function enterMode(m) {
+  initAudio();
   mode = m;
   document.getElementById('startMenu').classList.remove('show');
   if (m === 'programming') setupProgrammingMode();
@@ -461,6 +469,7 @@ function setupProgrammingMode() {
   if (startMarker) startMarker.setEnabled(true);
   if (defaultFloor) defaultFloor.setEnabled(true);
   if (defaultWalls) defaultWalls.forEach(w => w.setEnabled(true));
+  if (drone && drone._nose) drone._nose.setEnabled(true); // 🔧 Task3:編程模式恢復機鼻
   if (camera) {
     camera.attachControl(canvas, true);
     camera.alpha = -Math.PI/2;
@@ -487,6 +496,7 @@ function setupFreeflightMode() {
   if (startMarker) startMarker.setEnabled(false);
   if (defaultFloor) defaultFloor.setEnabled(false);
   if (defaultWalls) defaultWalls.forEach(w => w.setEnabled(false));
+  if (drone && drone._nose) drone._nose.setEnabled(false); // 🔧 Task3:無盡模式隱藏紅色機鼻
   rebuildObstacles([]);
   rebuildCheckpoints([]);
   rebuildTreasures([]);
@@ -591,12 +601,12 @@ const LEVELS = [
   { name: '起飛與降落', desc: '學習最基本的操作:先「起飛」,再「降落」。', goal: '完成一次起飛 → 降落', hint: '只需要兩個積木:「🚀 起飛」+「🛬 降落」。', start: { gx: -3, gz: 0, dir: 0 }, target: { gx: -3, gz: 0 }, obstacles: [], check: (s) => s.tookOff && s.landed, solutionXml: () => chain(ST, TK, LD) },
   { name: '直線前進', desc: '無人機面向「東」。試試起飛後前進 8 格,到達紫色目標!', goal: '到達 (4, 0) 並降落', hint: '由 (-4, 0) 飛到 (4, 0),X 軸距離 = 8 格。', start: { gx: -4, gz: 0, dir: 0 }, target: { gx: 4, gz: 0 }, obstacles: [], check: (s) => s.atTarget && s.landed, solutionXml: () => chain(ST, TK, F(8), LD) },
   { name: '轉個彎', desc: '目標在南面!需要前進、右轉、再前進,才能到達。', goal: '到達 (2, -3) 並降落', hint: '先東 4 → 右轉 → 南 3 → 降落。', start: { gx: -2, gz: 0, dir: 0 }, target: { gx: 2, gz: -3 }, obstacles: [], check: (s) => s.atTarget && s.landed, solutionXml: () => chain(ST, TK, F(4), TR, F(3), LD) },
-  { name: '花園正方形', desc: '飛一個正方形巡邏路線!使用「🔁 重複 4 次」積木。', goal: '繞花瓶飛完正方形並返回起點 (-3, 0) 降落', hint: '「🔁 重複 4 次」包住「⬆️ 前進 3 格」+「↪️ 右轉」。', start: { gx: -3, gz: 0, dir: 0 }, target: { gx: -3, gz: 0 }, obstacles: [{ gx: -2, gz: -1, type: 'vase' }, { gx: -1, gz: -2, type: 'plant' }, { gx: 2, gz: 0, type: 'plant' }, { gx: -3, gz: 2, type: 'plant' }], check: (s) => s.tookOff && s.landed && s.atTarget && s.totalMoves >= 12, solutionXml: () => chain(ST, TK, { type: 'control_repeat', fields: { TIMES: 4 }, statements: { DO: chain(F(3), TR) } }, LD) },
-  { name: '穿越花瓶陣', desc: '繞過花瓶陣到達目標。', goal: '避開花瓶到達 (4, 0) 並降落', hint: '東 3 → 右轉南 3 → 左轉東 4 → 左轉北 3 → 右轉東 1 → 降落。', start: { gx: -4, gz: 0, dir: 0 }, target: { gx: 4, gz: 0 }, obstacles: [{ gx: 0, gz: 0, type: 'vase' }, { gx: 0, gz: -1, type: 'vase' }, { gx: 0, gz: 1, type: 'vase' }, { gx: -2, gz: 2, type: 'plant' }, { gx: 2, gz: -2, type: 'plant' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle, solutionXml: () => chain(ST, TK, F(3), TR, F(3), TL, F(4), TL, F(3), TR, F(1), LD) },
-  { name: '智能避障', desc: '使用條件判斷自動避開障礙物。', goal: '自動到達 (5, -2) 並降落', hint: '「🎯 重複直到到達終點」內放「❓ 如果前方有障礙」。', start: { gx: -5, gz: -2, dir: 0 }, target: { gx: 5, gz: -2 }, obstacles: [{ gx: -2, gz: -2, type: 'vase' }, { gx: 1, gz: -2, type: 'plant' }, { gx: 3, gz: -2, type: 'vase' }, { gx: -3, gz: 0, type: 'plant' }, { gx: 0, gz: 1, type: 'vase' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle, solutionXml: () => chain(ST, TK, { type: 'control_repeat_until_target', statements: { DO: chain({ type: 'control_if_obstacle', statements: { DO: chain(TR, F(1), TL, F(2), TL, F(1), TR), ELSE: chain(F(1)) } }) } }, LD) },
+  { name: '花園正方形', desc: '飛一個正方形巡邏路線!使用「🔁 重複 4 次」積木。花瓶和盆栽都是高牆,飛行時別撞上!', goal: '繞花瓶飛完正方形並返回起點 (-3, 0) 降落', hint: '「🔁 重複 4 次」包住「⬆️ 前進 3 格」+「↪️ 右轉」。', start: { gx: -3, gz: 0, dir: 0 }, target: { gx: -3, gz: 0 }, obstacles: [{ gx: -2, gz: -1, type: 'vase' }, { gx: -1, gz: -2, type: 'plant' }, { gx: 2, gz: 0, type: 'plant' }, { gx: -3, gz: 2, type: 'plant' }], check: (s) => s.tookOff && s.landed && s.atTarget && s.totalMoves >= 12, solutionXml: () => chain(ST, TK, { type: 'control_repeat', fields: { TIMES: 4 }, statements: { DO: chain(F(3), TR) } }, LD) },
+  { name: '穿越花瓶陣', desc: '花瓶現在是高聳的牆,無人機無法從上方飛越,只能繞道!想辦法繞過花瓶陣到達目標。', goal: '避開花瓶到達 (4, 0) 並降落', hint: '東 3 → 右轉南 3 → 左轉東 4 → 左轉北 3 → 右轉東 1 → 降落。', start: { gx: -4, gz: 0, dir: 0 }, target: { gx: 4, gz: 0 }, obstacles: [{ gx: 0, gz: 0, type: 'vase' }, { gx: 0, gz: -1, type: 'vase' }, { gx: 0, gz: 1, type: 'vase' }, { gx: -2, gz: 2, type: 'plant' }, { gx: 2, gz: -2, type: 'plant' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle, solutionXml: () => chain(ST, TK, F(3), TR, F(3), TL, F(4), TL, F(3), TR, F(1), LD) },
+  { name: '智能避障', desc: '障礙物都是擋住去路的高牆!用條件判斷自動偵測前方,聰明地繞過它們(撞上會直接墜機失敗)。', goal: '自動到達 (5, -2) 並降落', hint: '「🎯 重複直到到達終點」內放「❓ 如果前方有障礙」。', start: { gx: -5, gz: -2, dir: 0 }, target: { gx: 5, gz: -2 }, obstacles: [{ gx: -2, gz: -2, type: 'vase' }, { gx: 1, gz: -2, type: 'plant' }, { gx: 3, gz: -2, type: 'vase' }, { gx: -3, gz: 0, type: 'plant' }, { gx: 0, gz: 1, type: 'vase' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle, solutionXml: () => chain(ST, TK, { type: 'control_repeat_until_target', statements: { DO: chain({ type: 'control_if_obstacle', statements: { DO: chain(TR, F(1), TL, F(2), TL, F(1), TR), ELSE: chain(F(1)) } }) } }, LD) },
   { name: '之字形掃描', desc: '掃描整個田地!之字形路線。', goal: '完成之字形掃描並到達 (-3, -2) 降落', hint: '「🔁 重複 2 次」內放完整的 zigzag。', start: { gx: -3, gz: 2, dir: 0 }, target: { gx: -3, gz: -2 }, obstacles: [{ gx: 4, gz: 2, type: 'plant' }, { gx: -4, gz: 0, type: 'vase' }, { gx: 4, gz: -2, type: 'plant' }, { gx: -5, gz: 3, type: 'vase' }, { gx: 5, gz: -3, type: 'plant' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle && s.totalMoves >= 28, solutionXml: () => chain(ST, TK, { type: 'control_repeat', fields: { TIMES: 2 }, statements: { DO: chain(F(6), TR, F(1), TR, F(6), TL, F(1), TL) } }, LD) },
   { name: '環島巡邏', desc: '繞過花圃飛一個大正方形。', goal: '繞花圃一周返回起點 (-1, 2) 降落', hint: '「🔁 重複 4 次」內放「⬆️前進 4 + ↪️右轉」。', start: { gx: -1, gz: 2, dir: 0 }, target: { gx: -1, gz: 2 }, obstacles: [{ gx: 0, gz: 0, type: 'plant' }, { gx: 1, gz: 0, type: 'plant' }, { gx: 0, gz: -1, type: 'vase' }, { gx: 1, gz: -1, type: 'vase' }, { gx: -3, gz: 3, type: 'vase' }, { gx: 5, gz: -3, type: 'plant' }], check: (s) => s.tookOff && s.landed && s.atTarget && !s.hitObstacle && s.totalMoves >= 16, solutionXml: () => chain(ST, TK, { type: 'control_repeat', fields: { TIMES: 4 }, statements: { DO: chain(F(4), TR) } }, LD) },
-  { name: '障礙隧道', desc: '一排花瓶 🏺 攔住路。使用條件判斷自動繞過。', goal: '穿越花瓶隧道到 (6, 0) 降落', hint: '迴圈 + 條件判斷做 U 形繞路。', start: { gx: -6, gz: 0, dir: 0 }, target: { gx: 6, gz: 0 }, obstacles: [{ gx: -3, gz: 0, type: 'vase' }, { gx: 0, gz: 0, type: 'vase' }, { gx: 3, gz: 0, type: 'vase' }, { gx: -5, gz: 2, type: 'plant' }, { gx: 5, gz: 2, type: 'plant' }, { gx: -5, gz: -3, type: 'plant' }, { gx: 5, gz: -3, type: 'plant' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle, solutionXml: () => chain(ST, TK, { type: 'control_repeat_until_target', statements: { DO: chain({ type: 'control_if_obstacle', statements: { DO: chain(TR, F(1), TL, F(2), TL, F(1), TR), ELSE: chain(F(1)) } }) } }, LD) },
+  { name: '障礙隧道', desc: '一排花瓶 🏺 高牆攔住路。使用條件判斷自動繞過。', goal: '穿越花瓶隧道到 (6, 0) 降落', hint: '迴圈 + 條件判斷做 U 形繞路。', start: { gx: -6, gz: 0, dir: 0 }, target: { gx: 6, gz: 0 }, obstacles: [{ gx: -3, gz: 0, type: 'vase' }, { gx: 0, gz: 0, type: 'vase' }, { gx: 3, gz: 0, type: 'vase' }, { gx: -5, gz: 2, type: 'plant' }, { gx: 5, gz: 2, type: 'plant' }, { gx: -5, gz: -3, type: 'plant' }, { gx: 5, gz: -3, type: 'plant' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle, solutionXml: () => chain(ST, TK, { type: 'control_repeat_until_target', statements: { DO: chain({ type: 'control_if_obstacle', statements: { DO: chain(TR, F(1), TL, F(2), TL, F(1), TR), ELSE: chain(F(1)) } }) } }, LD) },
   { name: '花園迷宮', desc: '穿越複雜的花園迷宮。', goal: '從 (-6, 4) 到 (6, -4) 降落', hint: '逐步繞過每組障礙物。', start: { gx: -6, gz: 4, dir: 0 }, target: { gx: 6, gz: -4 }, obstacles: [{ gx: -2, gz: 4, type: 'vase' }, { gx: -2, gz: 3, type: 'plant' }, { gx: -2, gz: 2, type: 'vase' }, { gx: -2, gz: 1, type: 'plant' }, { gx: -3, gz: -1, type: 'vase' }, { gx: -2, gz: -1, type: 'plant' }, { gx: 1, gz: 0, type: 'vase' }, { gx: 1, gz: -1, type: 'plant' }, { gx: 4, gz: -2, type: 'vase' }, { gx: 4, gz: -3, type: 'plant' }, { gx: 4, gz: -4, type: 'vase' }, { gx: 5, gz: 1, type: 'plant' }, { gx: 2, gz: 2, type: 'vase' }, { gx: -4, gz: 0, type: 'plant' }, { gx: -5, gz: -3, type: 'vase' }, { gx: -1, gz: -3, type: 'plant' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle, solutionXml: () => chain(ST, TK, F(3), TR, F(4), TL, F(3), TR, F(2), TL, F(3), TL, F(2), TR, F(3), TR, F(4), LD) },
   { name: '雙檢查點巡邏', desc: '依順序經過 2 個黃色檢查點 A → B,最後到終點。', goal: '依序 A → B → 到 (4, 0) 降落', hint: '北 2 → 東 2 (A) → 南 4 → 東 4 (B) → 北 2 → 東 2。', start: { gx: -4, gz: 0, dir: 0 }, target: { gx: 4, gz: 0 }, checkpoints: [{ gx: -2, gz: 2, label: 'A' }, { gx: 2, gz: -2, label: 'B' }], obstacles: [{ gx: 0, gz: 0, type: 'vase' }, { gx: 0, gz: 1, type: 'plant' }, { gx: 0, gz: -1, type: 'plant' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle && s.checkpointOrderCorrect && s.checkpointsVisitedCount === 2, solutionXml: () => chain(ST, TK, TL, F(2), TR, F(2), TR, F(4), TL, F(4), TL, F(2), TR, F(2), LD) },
   { name: '寶物獵人', desc: '收集 4 顆寶石後再到終點降落。', goal: '收集全部 4 顆寶石後到 (5, 0) 降落', hint: '4 顆寶石位置:(-3, 2)、(0, 2)、(0, -2)、(3, -2)。', start: { gx: -5, gz: 0, dir: 0 }, target: { gx: 5, gz: 0 }, treasures: [{ gx: -3, gz: 2 }, { gx: 0, gz: 2 }, { gx: 0, gz: -2 }, { gx: 3, gz: -2 }], obstacles: [{ gx: -2, gz: 0, type: 'vase' }, { gx: 2, gz: 0, type: 'plant' }], check: (s) => s.atTarget && s.landed && !s.hitObstacle && s.treasuresCollectedCount === 4, solutionXml: () => chain(ST, TK, TL, F(2), TR, F(5), TR, F(4), TL, F(3), TL, F(2), TR, F(2), LD) },
@@ -748,7 +758,7 @@ function loadLevel(idx) {
   targetCell = { gx: lv.target.gx, gz: lv.target.gz };
   pos = { x: lv.start.gx * STEP, z: lv.start.gz * STEP };
   dir = lv.start.dir;
-  flying = false; targetProp = 0;
+  flying = false; targetProp = 0; crashed = false;
   levelStats = createEmptyStats();
   if (drone) {
     drone.position = new BABYLON.Vector3(pos.x, 0.4, pos.z);
@@ -811,36 +821,54 @@ function applyAnswer() {
 }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
+// ============================================================
+// 🌿 障礙物 — 加高為「高牆」,確保飛行高度也擋得住(FIX 3)
+// ============================================================
 function createVase(gx, gz, idx) {
   const parent = new BABYLON.TransformNode('vase' + idx, scene);
   parent.position = new BABYLON.Vector3(gx * STEP, 0, gz * STEP);
-  const base = BABYLON.MeshBuilder.CreateCylinder('vBase' + idx, { height: 0.15, diameterTop: 0.5, diameterBottom: 0.4 }, scene);
-  base.position.y = 0.075; base.parent = parent;
-  const body = BABYLON.MeshBuilder.CreateSphere('vBody' + idx, { diameter: 0.85, segments: 16 }, scene);
-  body.scaling = new BABYLON.Vector3(1, 1.3, 1); body.position.y = 0.7; body.parent = parent;
-  const neck = BABYLON.MeshBuilder.CreateCylinder('vNeck' + idx, { height: 0.3, diameterTop: 0.45, diameterBottom: 0.35 }, scene);
-  neck.position.y = 1.35; neck.parent = parent;
   const mat = new BABYLON.StandardMaterial('vmat' + idx, scene);
   const blueShade = 0.85 + Math.random() * 0.15;
-  mat.diffuseColor = new BABYLON.Color3(blueShade * 0.7, blueShade * 0.85, blueShade);
-  base.material = mat; body.material = mat; neck.material = mat;
+  mat.diffuseColor = new BABYLON.Color3(blueShade * 0.6, blueShade * 0.8, blueShade);
+  mat.specularColor = new BABYLON.Color3(0.4, 0.55, 0.7);
+  const base = BABYLON.MeshBuilder.CreateCylinder('vBase' + idx, { height: 0.35, diameterTop: 0.55, diameterBottom: 0.8 }, scene);
+  base.position.y = 0.175; base.material = mat; base.parent = parent;
+  const body = BABYLON.MeshBuilder.CreateCylinder('vBody' + idx, { height: 1.7, diameterTop: 0.5, diameterBottom: 0.85, tessellation: 18 }, scene);
+  body.position.y = 1.15; body.material = mat; body.parent = parent;
+  const bulge = BABYLON.MeshBuilder.CreateSphere('vBulge' + idx, { diameter: 0.95, segments: 16 }, scene);
+  bulge.scaling.y = 1.15; bulge.position.y = 1.0; bulge.material = mat; bulge.parent = parent;
+  const neck = BABYLON.MeshBuilder.CreateCylinder('vNeck' + idx, { height: 0.85, diameterTop: 0.58, diameterBottom: 0.42, tessellation: 18 }, scene);
+  neck.position.y = 2.4; neck.material = mat; neck.parent = parent;
+  const rim = BABYLON.MeshBuilder.CreateTorus('vRim' + idx, { diameter: 0.62, thickness: 0.09, tessellation: 18 }, scene);
+  rim.position.y = 2.82; rim.material = mat; rim.parent = parent;
   return parent;
 }
 
 function createPlant(gx, gz, idx) {
   const parent = new BABYLON.TransformNode('plant' + idx, scene);
   parent.position = new BABYLON.Vector3(gx * STEP, 0, gz * STEP);
-  const pot = BABYLON.MeshBuilder.CreateCylinder('pot' + idx, { height: 0.5, diameterTop: 0.7, diameterBottom: 0.5 }, scene);
-  pot.position.y = 0.25; pot.parent = parent;
+  const pot = BABYLON.MeshBuilder.CreateCylinder('pot' + idx, { height: 0.6, diameterTop: 0.75, diameterBottom: 0.55 }, scene);
+  pot.position.y = 0.3;
   const pmat = new BABYLON.StandardMaterial('pmat' + idx, scene);
-  pmat.diffuseColor = new BABYLON.Color3(0.55, 0.35, 0.2);
-  pot.material = pmat;
+  pmat.diffuseColor = new BABYLON.Color3(0.55, 0.33, 0.18);
+  pot.material = pmat; pot.parent = parent;
+  const trunk = BABYLON.MeshBuilder.CreateCylinder('trunk' + idx, { height: 1.5, diameterTop: 0.18, diameterBottom: 0.28 }, scene);
+  trunk.position.y = 1.35;
+  const tkmat = new BABYLON.StandardMaterial('tkmat' + idx, scene);
+  tkmat.diffuseColor = new BABYLON.Color3(0.45, 0.3, 0.16);
+  trunk.material = tkmat; trunk.parent = parent;
   const leafMat = new BABYLON.StandardMaterial('leaf' + idx, scene);
-  leafMat.diffuseColor = new BABYLON.Color3(0.15, 0.55, 0.2);
-  const leafPositions = [{x:0,y:0.95,z:0,s:0.55},{x:0.2,y:1.1,z:0.1,s:0.4},{x:-0.15,y:1.15,z:-0.05,s:0.42},{x:0.05,y:1.3,z:0.15,s:0.35}];
-  leafPositions.forEach((p, i) => {
-    const leaf = BABYLON.MeshBuilder.CreateSphere('lf' + idx + '_' + i, { diameter: p.s, segments: 8 }, scene);
-    leaf.position = new BABYLON.Vector3(p.x, p.y, p.z); leaf.parent = parent; leaf.material = leafMat;
+  leafMat.diffuseColor = new BABYLON.Color3(0.15, 0.55, 0.22);
+  const blobs = [
+    { x: 0, y: 2.15, z: 0, s: 1.2 },
+    { x: 0.38, y: 2.5, z: 0.12, s: 0.85 },
+    { x: -0.32, y: 2.55, z: -0.15, s: 0.9 },
+    { x: 0.1, y: 2.9, z: 0.22, s: 0.72 },
+    { x: -0.12, y: 2.78, z: 0.3, s: 0.6 },
+  ];
+  blobs.forEach((p, i) => {
+    const leaf = BABYLON.MeshBuilder.CreateSphere('lf' + idx + '_' + i, { diameter: p.s, segments: 10 }, scene);
+    leaf.position = new BABYLON.Vector3(p.x, p.y, p.z); leaf.material = leafMat; leaf.parent = parent;
   });
   return parent;
 }
@@ -982,7 +1010,7 @@ function evalValueBlock(block) {
 }
 
 async function execBlock(block) {
-  if (!block || stopRequested) return;
+  if (!block || stopRequested || crashed) return;
   if (block.addSelect) block.addSelect();
   try {
     switch(block.type) {
@@ -990,15 +1018,15 @@ async function execBlock(block) {
       case 'action_takeoff': await takeoff(); break;
       case 'action_land': await land(); break;
       case 'action_wait': { await sleep(parseInt(block.getFieldValue('MS'))); break; }
-      case 'move_forward': { const n = parseInt(block.getFieldValue('STEPS')); for (let i = 0; i < n; i++) { if (stopRequested) break; if (!await move(1)) break; } break; }
-      case 'move_backward': { const n = parseInt(block.getFieldValue('STEPS')); for (let i = 0; i < n; i++) { if (stopRequested) break; if (!await move(-1)) break; } break; }
+      case 'move_forward': { const n = parseInt(block.getFieldValue('STEPS')); for (let i = 0; i < n; i++) { if (stopRequested || crashed) break; if (!await move(1)) break; } break; }
+      case 'move_backward': { const n = parseInt(block.getFieldValue('STEPS')); for (let i = 0; i < n; i++) { if (stopRequested || crashed) break; if (!await move(-1)) break; } break; }
       case 'turn_left': await turn(-90); break;
       case 'turn_right': await turn(90); break;
       case 'control_repeat': { 
         const times = parseInt(block.getFieldValue('TIMES')); 
         const inner = block.getInputTargetBlock('DO'); 
         for (let i = 0; i < times; i++) { 
-          if (stopRequested) break; 
+          if (stopRequested || crashed) break; 
           if (levelStats.tookOff && !flying) break;
           await execChain(inner); 
         } 
@@ -1007,7 +1035,7 @@ async function execBlock(block) {
       case 'control_repeat_until_target': { 
         const inner = block.getInputTargetBlock('DO'); 
         let safety = 0; 
-        while (!isAtTarget() && safety < 300 && !stopRequested) { 
+        while (!isAtTarget() && safety < 300 && !stopRequested && !crashed) { 
           if (levelStats.tookOff && !flying) break;
           await execChain(inner); 
           safety++; 
@@ -1017,7 +1045,7 @@ async function execBlock(block) {
       case 'control_repeat_forever': {
         const inner = block.getInputTargetBlock('DO');
         let safety = 0;
-        while (safety < 800 && !stopRequested) {
+        while (safety < 800 && !stopRequested && !crashed) {
           if (levelStats.tookOff && !flying) break;
           await execChain(inner);
           safety++;
@@ -1042,7 +1070,7 @@ async function execBlock(block) {
 }
 
 async function execChain(block) {
-  while (block && !stopRequested) {
+  while (block && !stopRequested && !crashed) {
     if (levelStats.tookOff && !flying && 
         block.type !== 'event_start' && 
         block.type !== 'action_takeoff' &&
@@ -1069,12 +1097,14 @@ function toast(msg, type='info') {
 // 3D 場景
 // ============================================================
 const STEP = 1.5, GRID_W = 18, GRID_D = 14;
+const HALF = STEP / 2;                       // 🔧 FIX 1: 半格偏移,讓物件落在格子中央
 const FLOOR_W = GRID_W * STEP, FLOOR_D = GRID_D * STEP;
 const FLY_H = 2.5;
 let canvas, engine, scene, camera, drone, propellers = [];
 let pos = { x: 0, z: 0 }, dir = 0;
 let flying = false, busy = false, propSpeed = 0, targetProp = 0;
 let stopRequested = false;
+let crashed = false;                          // 🔧 FIX 3: 撞到障礙物時立即停機
 let startCell = { gx: 0, gz: 0 }, targetCell = { gx: 4, gz: -3 };
 let targetMarker, targetRing, startMarker;
 let defaultFloor, defaultWalls = [];
@@ -1094,6 +1124,12 @@ function init3D() {
   hemi.intensity = 0.7;
   const dirL = new BABYLON.DirectionalLight('d', new BABYLON.Vector3(-1,-2,-1), scene);
   dirL.intensity = 0.7; dirL.position = new BABYLON.Vector3(10,20,10);
+  // 🔧 FIX 2: 固定大小的陰影視錐 + 每幀跟著無人機移動,確保任何關卡影子都會跟隨
+  dirL.autoUpdateExtends = false;
+  dirL.shadowMinZ = 1;
+  dirL.shadowMaxZ = 60;
+  dirL.orthoLeft = -8; dirL.orthoRight = 8;
+  dirL.orthoTop = 8; dirL.orthoBottom = -8;
   const sg = new BABYLON.ShadowGenerator(1024, dirL);
   sg.useBlurExponentialShadowMap = true;
   createGridFloor(); createWalls(); createMarkers(); createDrone(sg);
@@ -1109,6 +1145,12 @@ function init3D() {
     const now = Date.now();
     const dt = Math.min(50, now - lastFrame);
     lastFrame = now;
+    // 🔧 FIX 2: 讓方向光跟著無人機,維持固定相對偏移(光來自 +x,+y,+z 方向)
+    if (drone) {
+      dirL.position.x = drone.position.x + 10;
+      dirL.position.y = drone.position.y + 20;
+      dirL.position.z = drone.position.z + 10;
+    }
     propSpeed += (targetProp - propSpeed) * 0.08;
     propellers.forEach((p,i) => p.rotation.y += propSpeed * (i%2===0?1:-1));
     if (targetRing) { targetRing.rotation.y += 0.02; targetRing.position.y = 0.05 + Math.sin(performance.now()*0.003)*0.05; }
@@ -1124,6 +1166,9 @@ function init3D() {
 
 function createGridFloor() {
   defaultFloor = BABYLON.MeshBuilder.CreateGround('ground', { width: FLOOR_W, height: FLOOR_D }, scene);
+  // 🔧 FIX 1: 地板平移半格,使 gx*STEP 落在格子正中央(無人機不再站在十字交叉點上)
+  defaultFloor.position.x = -HALF;
+  defaultFloor.position.z = -HALF;
   const TEX = 1024;
   const tex = new BABYLON.DynamicTexture('ft', { width: TEX, height: TEX }, scene, false);
   const ctx = tex.getContext();
@@ -1148,9 +1193,10 @@ function createWalls() {
   ['back','left','right'].forEach((side) => {
     const w = side==='back' ? FLOOR_W : FLOOR_D;
     const m = BABYLON.MeshBuilder.CreatePlane(side, { width: w, height: 6 }, scene);
-    if (side==='back') m.position = new BABYLON.Vector3(0, 3, -FLOOR_D/2);
-    if (side==='left') { m.position = new BABYLON.Vector3(-FLOOR_W/2, 3, 0); m.rotation.y = Math.PI/2; }
-    if (side==='right') { m.position = new BABYLON.Vector3(FLOOR_W/2, 3, 0); m.rotation.y = -Math.PI/2; }
+    // 🔧 FIX 1: 牆面也跟著地板平移半格,保持與地板邊緣對齊
+    if (side==='back') m.position = new BABYLON.Vector3(-HALF, 3, -FLOOR_D/2 - HALF);
+    if (side==='left') { m.position = new BABYLON.Vector3(-FLOOR_W/2 - HALF, 3, -HALF); m.rotation.y = Math.PI/2; }
+    if (side==='right') { m.position = new BABYLON.Vector3(FLOOR_W/2 - HALF, 3, -HALF); m.rotation.y = -Math.PI/2; }
     m.material = wmat;
     defaultWalls.push(m);
   });
@@ -1214,6 +1260,7 @@ function createDrone(sg) {
   nm.diffuseColor = new BABYLON.Color3(0.95, 0.2, 0.2);
   nm.emissiveColor = new BABYLON.Color3(0.55, 0.1, 0.1);
   nose.material = nm; meshes.push(nose);
+  drone._nose = nose; // 🔧 Task3:供 Cyberpunk 模式隱藏
   const strip = BABYLON.MeshBuilder.CreateBox('strip', { width: 0.04, height: 0.06, depth: 0.85 }, scene);
   strip.position = new BABYLON.Vector3(0, 0.15, 0); strip.parent = drone;
   const sm = new BABYLON.StandardMaterial('strpm', scene);
@@ -1354,10 +1401,11 @@ async function move(sign) {
   const ngz = Math.round(tz / STEP);
   if (!checkBounds(tx, tz)) { toast('🚫 出界,無法移動', 'error'); updateUI('出界'); return false; }
   if (isObstacleAt(ngx, ngz)) {
-    if (mode === 'programming') levelStats.hitObstacle = true;
+    // 🔧 FIX 3: 障礙物是實心高牆,撞上就立即停機並判定失敗
+    if (mode === 'programming') { levelStats.hitObstacle = true; crashed = true; }
     const type = getObstacleTypeAt(ngx, ngz);
-    const msg = type === 'vase' ? '🏺 撞到花瓶了!' : '🌿 撞到盆栽了!';
-    toast(msg, 'error'); updateUI('撞到障礙');
+    const msg = type === 'vase' ? '🏺 撞上花瓶高牆,無人機停機!' : '🌿 撞上盆栽高叢,無人機停機!';
+    toast(msg, 'error'); updateUI('撞毀停機');
     return false;
   }
   updateUI(sign>0?'前進中':'後退中');
@@ -1439,6 +1487,7 @@ function drawMinimap() {
 
 function resetAll() {
   if (busy) { stopRequested = true; setTimeout(resetAll, 100); return; }
+  crashed = false;
   if (mode === 'programming') {
     const lv = LEVELS[currentLevel];
     pos = { x: lv.start.gx * STEP, z: lv.start.gz * STEP }; dir = lv.start.dir;
@@ -1487,8 +1536,165 @@ const GAME = {
   road: null, roadTex: null, sideRails: [], stars: [],
   patternQueue: [], currentStage: 0, stageSpeedMul: 1, transitioning: false,
 };
+// ============================================================
+// 🔊 音效系統 (Web Audio,程序合成,無需外部檔案)
+// ============================================================
+let audioCtx = null, masterGain = null;
+function initAudio() {
+  if (audioCtx) { if (audioCtx.state === 'suspended') audioCtx.resume(); return; }
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.55;
+    masterGain.connect(audioCtx.destination);
+  } catch (e) { audioCtx = null; }
+}
+function tone(freq, dur, type, vol, slideTo) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t);
+  if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.15, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(g); g.connect(masterGain || audioCtx.destination);
+  osc.start(t); osc.stop(t + dur + 0.02);
+}
+function noiseBurst(dur, vol, freq) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const size = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
+  const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / size, 2);
+  const src = audioCtx.createBufferSource(); src.buffer = buf;
+  const f = audioCtx.createBiquadFilter(); f.type = 'lowpass';
+  f.frequency.setValueAtTime(freq || 1400, t);
+  f.frequency.exponentialRampToValueAtTime(200, t + dur);
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(vol || 0.3, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f); f.connect(g); g.connect(masterGain || audioCtx.destination);
+  src.start(t); src.stop(t + dur);
+}
+function sfxShoot()    { tone(900, 0.10, 'square', 0.07, 300); }
+function sfxExplode()  { noiseBurst(0.35, 0.28, 1600); tone(150, 0.3, 'sawtooth', 0.10, 50); }
+function sfxCoin()     { tone(1320, 0.07, 'sine', 0.10); setTimeout(() => tone(1760, 0.1, 'sine', 0.10), 55); }
+function sfxHit()      { noiseBurst(0.4, 0.34, 800); tone(90, 0.4, 'sawtooth', 0.16, 40); }
+function sfxPowerup()  { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.12, 'triangle', 0.12), i * 55)); }
+function sfxStage()    { [392, 523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.18, 'sawtooth', 0.09), i * 70)); }
+function sfxGameOver() { [440, 349, 294, 196].forEach((f, i) => setTimeout(() => tone(f, 0.45, 'sawtooth', 0.13), i * 200)); }
+function sfxBeep(hi)   { tone(hi ? 880 : 440, 0.15, 'square', 0.11); }
 
+// ============================================================
+// ✨ 道具系統 (Power-ups) + 邊界工具
+// ============================================================
+function clampX(x) { return Math.max(GAME_CFG.bounds.minX, Math.min(GAME_CFG.bounds.maxX, x)); }
+function clampY(y) { return Math.max(GAME_CFG.bounds.minY, Math.min(GAME_CFG.bounds.maxY, y)); }
+function hexToColor3(hex) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return new BABYLON.Color3(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
+const POWERUP_TYPES = {
+  shield: { icon: '🛡️', label: 'SHIELD', dur: 5000, color: '#4fc3f7' },
+  rapid:  { icon: '⚡',  label: 'RAPID',  dur: 6000, color: '#FFD700' },
+  triple: { icon: '✦',  label: 'TRIPLE', dur: 6000, color: '#ff45a0' },
+  slow:   { icon: '⏱️', label: 'SLOW',   dur: 4500, color: '#50C878' },
+  heal:   { icon: '❤',  label: 'HEAL',   dur: 0,    color: '#ff5577' },
+};
+function isPwrActive(type) { return GAME.activePwr && GAME.activePwr[type] && Date.now() < GAME.activePwr[type]; }
+
+function createPowerupMesh(type) {
+  const def = POWERUP_TYPES[type];
+  const col = hexToColor3(def.color);
+  const root = new BABYLON.TransformNode('pwr_' + Date.now() + Math.random(), scene);
+  const orb = BABYLON.MeshBuilder.CreateSphere('pwrOrb', { diameter: 0.85, segments: 12 }, scene);
+  orb.parent = root; orb.isPickable = false;
+  const mat = new BABYLON.StandardMaterial('pwrM', scene);
+  mat.diffuseColor = col; mat.emissiveColor = col.scale(0.6); mat.alpha = 0.35;
+  orb.material = mat;
+  const core = BABYLON.MeshBuilder.CreatePolyhedron('pwrCore', { type: 1, size: 0.3 }, scene);
+  core.parent = root; core.isPickable = false;
+  const cmat = new BABYLON.StandardMaterial('pwrCM', scene);
+  cmat.emissiveColor = col; cmat.diffuseColor = col; cmat.specularColor = new BABYLON.Color3(1, 1, 1);
+  core.material = cmat;
+  const ring = BABYLON.MeshBuilder.CreateTorus('pwrRing', { diameter: 1.05, thickness: 0.07, tessellation: 18 }, scene);
+  ring.parent = root; ring.isPickable = false; ring.material = cmat;
+  root._core = core; root._ring = ring; root._type = type;
+  return root;
+}
+function disposePowerup(pu) {
+  if (pu.mesh) { if (pu.mesh.getChildMeshes) pu.mesh.getChildMeshes().forEach(c => c.dispose()); pu.mesh.dispose && pu.mesh.dispose(); }
+}
+function maybeSpawnPowerup() {
+  if (Date.now() - GAME.lastPowerupSpawn < 9000) return;
+  GAME.lastPowerupSpawn = Date.now();
+  const pool = ['shield', 'rapid', 'triple', 'slow'];
+  if (GAME.lives < GAME_CFG.startLives && Math.random() < 0.4) pool.push('heal', 'heal');
+  const type = pool[Math.floor(Math.random() * pool.length)];
+  const mesh = createPowerupMesh(type);
+  const x = clampX((Math.random() - 0.5) * (GAME_CFG.bounds.maxX - GAME_CFG.bounds.minX));
+  const y = clampY(GAME_CFG.bounds.minY + Math.random() * (GAME_CFG.bounds.maxY - GAME_CFG.bounds.minY));
+  mesh.position = new BABYLON.Vector3(x, y, GAME_CFG.spawnZ + 4);
+  GAME.powerups.push({ type, mesh });
+}
+function updatePowerups(dt, dtFactor, speed) {
+  for (let i = GAME.powerups.length - 1; i >= 0; i--) {
+    const pu = GAME.powerups[i];
+    pu.mesh.position.z -= speed * dtFactor;
+    if (pu.mesh._core) { pu.mesh._core.rotation.y += 0.07 * dtFactor; pu.mesh._core.rotation.x += 0.05 * dtFactor; }
+    if (pu.mesh._ring) { pu.mesh._ring.rotation.x += 0.06 * dtFactor; pu.mesh._ring.rotation.z += 0.04 * dtFactor; }
+    const d = BABYLON.Vector3.Distance(pu.mesh.position, drone.position);
+    if (d < 1.15) { applyPowerup(pu.type); disposePowerup(pu); GAME.powerups.splice(i, 1); continue; }
+    if (pu.mesh.position.z < GAME_CFG.despawnZ) { disposePowerup(pu); GAME.powerups.splice(i, 1); }
+  }
+}
+function applyPowerup(type) {
+  const def = POWERUP_TYPES[type];
+  sfxPowerup();
+  if (type === 'heal') {
+    GAME.lives = Math.min(GAME_CFG.startLives + 2, GAME.lives + 1);
+    showComboPopup('+1 ❤', def.color, drone.position);
+  } else {
+    GAME.activePwr[type] = Date.now() + def.dur;
+    if (type === 'shield') GAME.invincibleUntil = Math.max(GAME.invincibleUntil, GAME.activePwr[type]);
+    showComboPopup(def.icon + ' ' + def.label + '!', def.color, drone.position);
+  }
+  createParticles(drone.position, hexToColor3(def.color), 18);
+  updatePowerupHUD();
+}
+function updatePowerupHUD() {
+  const bar = document.getElementById('powerupBar');
+  if (!bar) return;
+  const active = Object.keys(GAME.activePwr || {}).filter(t => isPwrActive(t));
+  if (active.length === 0) { bar.classList.remove('show'); bar.innerHTML = ''; return; }
+  bar.classList.add('show');
+  bar.innerHTML = active.map(t => {
+    const def = POWERUP_TYPES[t];
+    const pct = Math.max(0, Math.min(100, ((GAME.activePwr[t] - Date.now()) / def.dur) * 100));
+    return '<div class="pwr-chip" style="border-color:' + def.color + ';color:' + def.color + '">' +
+      '<span class="pwr-icon">' + def.icon + '</span><span>' + def.label + '</span>' +
+      '<span class="pwr-bar"><span class="pwr-fill" style="width:' + pct + '%;background:' + def.color + '"></span></span></div>';
+  }).join('');
+}
+function spawnThrusterParticle() {
+  const boosting = GAME.keys['ShiftLeft'] || GAME.keys['ShiftRight'];
+  if (Math.random() > (boosting ? 0.95 : 0.5)) return;
+  const stage = SCENE_STAGES[GAME.currentStage];
+  const p = BABYLON.MeshBuilder.CreateSphere('th_' + Math.random(), { diameter: 0.16 + Math.random() * 0.1, segments: 6 }, scene);
+  p.position = new BABYLON.Vector3(drone.position.x + (Math.random() - 0.5) * 0.3, drone.position.y - 0.22, drone.position.z - 0.35);
+  p.isPickable = false;
+  const m = new BABYLON.StandardMaterial('thm_' + Math.random(), scene);
+  m.emissiveColor = new BABYLON.Color3(stage.accent[0], stage.accent[1], stage.accent[2]);
+  m.diffuseColor = m.emissiveColor; m.alpha = 0.85;
+  p.material = m;
+  GAME.particles.push({ mesh: p, vx: 0, vy: 0, vz: -0.16, life: 280, maxLife: 280, isTrail: true });
+}
 function startEndlessGame() {
+  initAudio();
   GAME.active = false; GAME.gameOver = false; GAME.paused = false;
   GAME.score = 0; GAME.lives = GAME_CFG.startLives;
   GAME.combo = 0; GAME.maxCombo = 0; GAME.speedMul = 1; GAME.stageSpeedMul = 1;
@@ -1496,6 +1702,7 @@ function startEndlessGame() {
   GAME.invincibleUntil = 0;
   GAME.shotsFired = 0; GAME.shotsHit = 0; GAME.coinsCollected = 0;
   GAME.patternQueue = []; GAME.currentStage = 0; GAME.transitioning = false;
+  GAME.powerups = []; GAME.activePwr = {}; GAME.lastPowerupSpawn = Date.now();
   clearGameObjects();
   scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
   scene.clearColor = new BABYLON.Color4(SCENE_STAGES[0].sky[0], SCENE_STAGES[0].sky[1], SCENE_STAGES[0].sky[2], 1);
@@ -1504,11 +1711,16 @@ function startEndlessGame() {
   drone.rotation = new BABYLON.Vector3(0, 0, 0);
   flying = true; targetProp = 0.35;
   createRunnerEnvironment();
+  GAME.shieldMesh = BABYLON.MeshBuilder.CreateSphere('shieldBubble', { diameter: 2.1, segments: 16 }, scene);
+  const shMat = new BABYLON.StandardMaterial('shMat', scene);
+  shMat.diffuseColor = new BABYLON.Color3(0.3, 0.7, 1); shMat.emissiveColor = new BABYLON.Color3(0.2, 0.5, 1);
+  shMat.alpha = 0.18; shMat.backFaceCulling = false;
+  GAME.shieldMesh.material = shMat; GAME.shieldMesh.isPickable = false; GAME.shieldMesh.setEnabled(false);
   applyStageVisuals(0, true);
   updateGameHUD();
+  updatePowerupHUD();
   startCountdown();
 }
-
 function startCountdown() {
   const overlay = document.getElementById('countdownOverlay');
   const text = document.getElementById('countdownText');
@@ -1519,24 +1731,28 @@ function startCountdown() {
   text.style.textShadow = '0 0 30px #4fc3f7';
   text.style.animation = 'none';
   setTimeout(() => text.style.animation = 'cdPulse 0.8s ease-out', 10);
+  sfxBeep(false);
   const interval = setInterval(() => {
     count--;
     if (count > 0) {
       text.textContent = count;
       text.style.animation = 'none';
       setTimeout(() => text.style.animation = 'cdPulse 0.8s ease-out', 10);
+      sfxBeep(false);
     } else if (count === 0) {
       text.textContent = 'GO!';
       text.style.color = '#50C878';
       text.style.textShadow = '0 0 30px #50C878';
       text.style.animation = 'none';
       setTimeout(() => text.style.animation = 'cdPulse 0.8s ease-out', 10);
+      sfxBeep(true);
     } else {
       clearInterval(interval);
       overlay.classList.remove('show');
       GAME.active = true;
       GAME.startTime = Date.now();
       GAME.lastSpawn = Date.now();
+      GAME.lastPowerupSpawn = Date.now();
     }
   }, 1000);
 }
@@ -1548,6 +1764,7 @@ function stopEndlessGame() {
   document.getElementById('countdownOverlay').classList.remove('show');
   document.getElementById('gameOverModal').classList.remove('show');
   document.getElementById('stageBanner').classList.remove('show');
+  const pb = document.getElementById('powerupBar'); if (pb) pb.classList.remove('show');
 }
 
 function restartEndlessGame() {
@@ -1565,6 +1782,9 @@ function clearGameObjects() {
   GAME.particles = [];
   GAME.muzzleFlashes.forEach(m => { if (m.mesh) m.mesh.dispose(); if (m.light) m.light.dispose(); });
   GAME.muzzleFlashes = [];
+  (GAME.powerups || []).forEach(pu => disposePowerup(pu));
+  GAME.powerups = [];
+  if (GAME.shieldMesh) { GAME.shieldMesh.dispose(); GAME.shieldMesh = null; }
   GAME.skyscrapers.forEach(s => s.mesh && s.mesh.dispose());
   GAME.skyscrapers = [];
   GAME.speedLines.forEach(l => l.mesh && l.mesh.dispose());
@@ -1706,6 +1926,7 @@ function checkStageTransition() {
 function transitionToStage(idx) {
   if (idx === GAME.currentStage || GAME.transitioning) return;
   GAME.transitioning = true;
+  sfxStage();
   const stage = SCENE_STAGES[idx];
   const flash = document.getElementById('stageFlash');
   flash.style.backgroundColor = stage.color;
@@ -1852,69 +2073,108 @@ function createObstacleMesh(type) {
 function spawnObstaclePattern() {
   const elapsed = (Date.now() - GAME.startTime) / 1000;
   const difficulty = Math.min(1, elapsed / 60);
-  const stage = SCENE_STAGES[GAME.currentStage];
-  const minY = GAME_CFG.bounds.minY;
-  const maxY = GAME_CFG.bounds.maxY;
-  const yRange = maxY - minY;
+  const minX = GAME_CFG.bounds.minX, maxX = GAME_CFG.bounds.maxX;
+  const minY = GAME_CFG.bounds.minY, maxY = GAME_CFG.bounds.maxY;
+  const xRange = maxX - minX, yRange = maxY - minY;
+  const randX = () => minX + Math.random() * xRange;
   const randY = () => minY + Math.random() * yRange;
+  const dX = drone ? drone.position.x : 0;
+  const dY = drone ? drone.position.y : 3;
   const redChance = 0.2 + GAME.currentStage * 0.05;
+  const ph = () => Math.random() * Math.PI * 2;
+
   if (GAME.patternQueue.length === 0) {
+    const camper = Math.random() < (0.18 + difficulty * 0.22);
     const r = Math.random();
-    if (r < 0.15) {
-      GAME.patternQueue.push({ type: 'blue', x: (Math.random() - 0.5) * 6, y: randY(), offsetZ: 0 });
-    } else if (r < 0.15 + redChance) {
-      GAME.patternQueue.push({ type: 'red', x: (Math.random() - 0.5) * 6, y: randY(), offsetZ: 0 });
-    } else if (r < 0.55) {
-      const baseX = (Math.random() - 0.5) * 5;
-      const baseY = randY();
-      for (let i = 0; i < 3; i++) GAME.patternQueue.push({ type: 'coin', x: baseX, y: baseY, offsetZ: i * 3 });
-    } else if (r < 0.72 && difficulty > 0.2) {
-      const gap = Math.floor(Math.random() * 3);
-      const positions = [-2.5, 0, 2.5];
-      const wallY = randY();
-      positions.forEach((px, idx) => { if (idx !== gap) GAME.patternQueue.push({ type: 'blue', x: px, y: wallY, offsetZ: 0 }); });
-      GAME.patternQueue.push({ type: 'coin', x: positions[gap], y: wallY, offsetZ: 0 });
-    } else if (r < 0.88 && difficulty > 0.25) {
-      const wallX = (Math.random() - 0.5) * 5;
-      const heights = [minY + yRange * 0.12, minY + yRange * 0.5, minY + yRange * 0.88];
-      const gapIdx = Math.floor(Math.random() * 3);
-      heights.forEach((py, idx) => { if (idx !== gapIdx) GAME.patternQueue.push({ type: 'blue', x: wallX, y: py, offsetZ: 0 }); });
-      GAME.patternQueue.push({ type: 'coin', x: wallX, y: heights[gapIdx], offsetZ: 0 });
+
+    if (camper) {
+      // 🔧 Task2:直接朝玩家「當前位置」生成,杜絕在最上/最下/邊緣的固定躲藏點
+      const t = Math.random() < redChance ? 'red' : 'blue';
+      GAME.patternQueue.push({ type: t, x: clampX(dX + (Math.random() - 0.5)), y: clampY(dY + (Math.random() - 0.5)), offsetZ: 0,
+                               weave: (t === 'red' && difficulty > 0.4) ? 0.8 : 0, phase: ph() });
+      if (Math.random() < 0.4) GAME.patternQueue.push({ type: 'coin', x: clampX(-dX), y: clampY(minY + maxY - dY), offsetZ: 6 });
+    } else if (r < 0.12) {
+      GAME.patternQueue.push({ type: 'blue', x: randX(), y: randY(), offsetZ: 0 });
+    } else if (r < 0.12 + redChance) {
+      GAME.patternQueue.push({ type: 'red', x: randX(), y: randY(), offsetZ: 0, weave: difficulty > 0.5 ? 1.0 : 0, phase: ph() });
+    } else if (r < 0.40) {
+      // 金幣斜串,鼓勵走位
+      const bx = randX(), by = randY(), sx = (Math.random() - 0.5) * 0.9, sy = (Math.random() - 0.5) * 0.9;
+      for (let i = 0; i < 4; i++) GAME.patternQueue.push({ type: 'coin', x: clampX(bx + sx * i), y: clampY(by + sy * i), offsetZ: i * 2.5 });
+    } else if (r < 0.60) {
+      // 🔧 Task2:全寬橫牆(含左右最邊),只留一個缺口
+      const lanes = [minX + 0.4, minX + xRange * 0.37, maxX - xRange * 0.37, maxX - 0.4];
+      const gap = Math.floor(Math.random() * lanes.length);
+      const wy = randY();
+      lanes.forEach((px, idx) => { if (idx !== gap) GAME.patternQueue.push({ type: 'blue', x: px, y: wy, offsetZ: 0 }); });
+      GAME.patternQueue.push({ type: 'coin', x: lanes[gap], y: wy, offsetZ: 0 });
+    } else if (r < 0.80) {
+      // 🔧 Task2:全高直牆(含最上最下),只留一個缺口(專治上下躲藏)
+      const wx = randX();
+      const rows = [minY + 0.4, minY + yRange * 0.37, maxY - yRange * 0.37, maxY - 0.4];
+      const gap = Math.floor(Math.random() * rows.length);
+      rows.forEach((py, idx) => { if (idx !== gap) GAME.patternQueue.push({ type: 'blue', x: wx, y: py, offsetZ: 0 }); });
+      GAME.patternQueue.push({ type: 'coin', x: wx, y: rows[gap], offsetZ: 0 });
+      if (difficulty > 0.45) {
+        const wx2 = clampX(wx + (Math.random() < 0.5 ? -2.2 : 2.2));
+        const gap2 = Math.floor(Math.random() * rows.length);
+        rows.forEach((py, idx) => { if (idx !== gap2) GAME.patternQueue.push({ type: 'blue', x: wx2, y: py, offsetZ: 8 }); });
+      }
+    } else if (r < 0.90) {
+      // 🔧 Task2:上下夾擊,同時封住最上與最下,逼回中間
+      const wx = randX();
+      GAME.patternQueue.push({ type: 'blue', x: wx, y: maxY - 0.35, offsetZ: 0 });
+      GAME.patternQueue.push({ type: 'blue', x: wx, y: minY + 0.35, offsetZ: 0 });
+      GAME.patternQueue.push({ type: (Math.random() < redChance ? 'red' : 'coin'), x: wx, y: (minY + maxY) / 2, offsetZ: 0, phase: ph() });
     } else {
-      GAME.patternQueue.push({ type: 'red', x: (Math.random() - 0.5) * 4, y: randY(), offsetZ: 0 });
-      if (difficulty > 0.4) GAME.patternQueue.push({ type: 'blue', x: (Math.random() < 0.5 ? -2.5 : 2.5), y: randY(), offsetZ: 3 });
+      // 紅球小隊(連射挑戰)
+      const n = 2 + Math.floor(difficulty * 2);
+      for (let i = 0; i < n; i++) GAME.patternQueue.push({ type: 'red', x: randX(), y: randY(), offsetZ: i * 4, weave: difficulty > 0.55 ? 1.1 : 0, phase: ph() });
     }
   }
+
   while (GAME.patternQueue.length > 0) {
     const p = GAME.patternQueue.shift();
     const mesh = createObstacleMesh(p.type);
-    mesh.position = new BABYLON.Vector3(p.x, p.y, GAME_CFG.spawnZ + p.offsetZ);
-    GAME.obstacles.push({ type: p.type, mesh: mesh, spawnTime: Date.now(), destroyed: false });
+    mesh.position = new BABYLON.Vector3(p.x, p.y, GAME_CFG.spawnZ + (p.offsetZ || 0));
+    GAME.obstacles.push({ type: p.type, mesh: mesh, spawnTime: Date.now(), destroyed: false, baseX: p.x, baseY: p.y, weave: p.weave || 0, phase: p.phase || 0 });
   }
 }
-
 function updateEndlessGame(dt) {
   if (!GAME.active || GAME.gameOver) return;
   const dtFactor = dt / 16.67;
   const elapsed = (Date.now() - GAME.startTime) / 1000;
   GAME.speedMul = Math.min(GAME_CFG.maxObsSpeed / GAME_CFG.baseObsSpeed, 1 + elapsed * GAME_CFG.speedAccel) * GAME.stageSpeedMul;
-  const currentObsSpeed = GAME_CFG.baseObsSpeed * GAME.speedMul;
-  GAME.score += currentObsSpeed * dtFactor * 0.5;
+  const slowFactor = isPwrActive('slow') ? 0.45 : 1;
+  const currentObsSpeed = GAME_CFG.baseObsSpeed * GAME.speedMul * slowFactor;
+  GAME.score += GAME_CFG.baseObsSpeed * GAME.speedMul * dtFactor * 0.5;
   GAME.spawnInterval = Math.max(GAME_CFG.minSpawnInterval, GAME_CFG.baseSpawnInterval - elapsed * 8);
   checkStageTransition();
   if (Date.now() - GAME.lastSpawn > GAME.spawnInterval) {
     spawnObstaclePattern();
     GAME.lastSpawn = Date.now();
   }
+  maybeSpawnPowerup();
+  spawnThrusterParticle();
   if (GAME.roadTex) GAME.roadTex.vOffset = (GAME.roadTex.vOffset || 0) + currentObsSpeed * 0.05 * dtFactor;
   updateDroneMovement(dt);
   updateSkyscrapers(currentObsSpeed, dtFactor);
   updateBullets(dt, dtFactor);
   updateMuzzleFlashes(dt);
+  updatePowerups(dt, dtFactor, currentObsSpeed);
+  if (GAME.shieldMesh) {
+    const on = isPwrActive('shield');
+    GAME.shieldMesh.setEnabled(on);
+    if (on) { GAME.shieldMesh.position.copyFrom(drone.position); const s = 1 + Math.sin(Date.now() * 0.01) * 0.06; GAME.shieldMesh.scaling.set(s, s, s); }
+  }
   for (let i = GAME.obstacles.length - 1; i >= 0; i--) {
     const obs = GAME.obstacles[i];
     if (obs.destroyed) { GAME.obstacles.splice(i, 1); continue; }
     obs.mesh.position.z -= currentObsSpeed * dtFactor;
+    if (obs.weave) {
+      obs.mesh.position.x = clampX(obs.baseX + Math.sin(Date.now() * 0.0025 + obs.phase) * obs.weave);
+      obs.mesh.position.y = clampY(obs.baseY + Math.cos(Date.now() * 0.002 + obs.phase) * obs.weave * 0.5);
+    }
     if (obs.type === 'red') {
       if (obs.mesh._main) { obs.mesh._main.rotation.y += 0.04 * dtFactor; obs.mesh._main.rotation.x += 0.025 * dtFactor; }
       if (obs.mesh._aura) {
@@ -1922,8 +2182,8 @@ function updateEndlessGame(dt) {
         obs.mesh._aura.scaling.x = pulse; obs.mesh._aura.scaling.y = pulse; obs.mesh._aura.scaling.z = pulse;
       }
       if (obs.mesh._beacon && obs.mesh._beacon.material) {
-        const flash = Math.sin(Date.now() * 0.015) > 0;
-        obs.mesh._beacon.material.emissiveColor = flash ? new BABYLON.Color3(1, 1, 0.3) : new BABYLON.Color3(1, 0.1, 0.1);
+        const fl = Math.sin(Date.now() * 0.015) > 0;
+        obs.mesh._beacon.material.emissiveColor = fl ? new BABYLON.Color3(1, 1, 0.3) : new BABYLON.Color3(1, 0.1, 0.1);
       }
     } else if (obs.type === 'coin' && obs.mesh._main) {
       obs.mesh._main.rotation.z += 0.15 * dtFactor;
@@ -1933,7 +2193,7 @@ function updateEndlessGame(dt) {
     const dx = obs.mesh.position.x - drone.position.x;
     const dy = obs.mesh.position.y - drone.position.y;
     const dz = obs.mesh.position.z - drone.position.z;
-    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
     const hitRange = obs.type === 'red' ? 1.0 : 0.85;
     if (dist < hitRange) {
       if (obs.type === 'coin') { collectCoin(obs); obs.destroyed = true; disposeObstacle(obs); continue; }
@@ -1963,8 +2223,8 @@ function updateEndlessGame(dt) {
   updateGameCamera(dt);
   updateCrosshairTargeting();
   updateGameHUD();
+  updatePowerupHUD();
 }
-
 function disposeObstacle(obs) {
   if (obs.mesh) { if (obs.mesh.getChildMeshes) obs.mesh.getChildMeshes().forEach(c => c.dispose()); obs.mesh.dispose && obs.mesh.dispose(); }
 }
@@ -1977,24 +2237,25 @@ function updateDroneMovement(dt) {
   if (GAME.keys['KeyW'] || GAME.keys['ArrowUp']) dy += 1;
   if (GAME.keys['KeyS'] || GAME.keys['ArrowDown']) dy -= 1;
   if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
-  const speed = GAME_CFG.moveSpeed * dtFactor;
+  const boosting = (GAME.keys['ShiftLeft'] || GAME.keys['ShiftRight']) && (dx !== 0 || dy !== 0);
+  const speed = GAME_CFG.moveSpeed * dtFactor * (boosting ? 1.9 : 1);
   let newX = drone.position.x + dx * speed;
   let newY = drone.position.y + dy * speed;
   newX = Math.max(GAME_CFG.bounds.minX, Math.min(GAME_CFG.bounds.maxX, newX));
   newY = Math.max(GAME_CFG.bounds.minY, Math.min(GAME_CFG.bounds.maxY, newY));
   drone.position.x = newX; drone.position.y = newY;
-  const targetRollZ = dx * 0.4;
+  const targetRollZ = dx * (boosting ? 0.6 : 0.4);
   const targetPitchX = -dy * 0.3;
   drone.rotation.z += (targetRollZ - drone.rotation.z) * 0.15;
   drone.rotation.x += (targetPitchX - drone.rotation.x) * 0.15;
-  if (Date.now() < GAME.invincibleUntil) {
+  const hitFlashing = Date.now() < GAME.invincibleUntil && !isPwrActive('shield');
+  if (hitFlashing) {
     const flash = Math.sin(Date.now() * 0.02) > 0;
     drone.getChildMeshes().forEach(m => { if (m.material) m.material.alpha = flash ? 0.4 : (m.material.alpha < 0.95 ? m.material.alpha : 1); });
   } else {
     drone.getChildMeshes().forEach(m => { if (m.material && m.material.name !== 'dm' && !m.material.name.startsWith('pm')) m.material.alpha = 1; });
   }
 }
-
 function updateGameCamera(dt) {
   const targetCamX = drone.position.x * 0.5;
   const targetCamY = drone.position.y + 1.8;
@@ -2090,7 +2351,7 @@ function createBulletMesh() {
   bullet.material = mat;
   const halo = BABYLON.MeshBuilder.CreateSphere('halo_' + Date.now() + Math.random(), { diameter: 0.85, segments: 10 }, scene);
   halo.parent = bullet;
-  halo.isPickable = false;
+halo.isPickable = false;
   const haloMat = new BABYLON.StandardMaterial('hm_' + Date.now() + Math.random(), scene);
   haloMat.diffuseColor = new BABYLON.Color3(1, 0.5, 0.1);
   haloMat.emissiveColor = new BABYLON.Color3(1, 0.4, 0.05);
@@ -2099,7 +2360,7 @@ function createBulletMesh() {
   return bullet;
 }
 
-function spawnBullet(targetObs) {
+function spawnBullet(targetObs, angleOffset) {
   const startPos = new BABYLON.Vector3(drone.position.x, drone.position.y - 0.05, drone.position.z + 1.0);
   const bullet = createBulletMesh();
   bullet.position = startPos.clone();
@@ -2108,6 +2369,12 @@ function spawnBullet(targetObs) {
     initialDir = targetObs.mesh.position.subtract(startPos).normalize();
   } else {
     initialDir = new BABYLON.Vector3(0, 0, 1);
+  }
+  if (angleOffset) {
+    const cos = Math.cos(angleOffset), sin = Math.sin(angleOffset);
+    const nx = initialDir.x * cos - initialDir.z * sin;
+    const nz = initialDir.x * sin + initialDir.z * cos;
+    initialDir = new BABYLON.Vector3(nx, initialDir.y, nz).normalize();
   }
   const light = new BABYLON.PointLight('blight_' + Date.now() + Math.random(), startPos.clone(), scene);
   light.diffuse = new BABYLON.Color3(1, 0.6, 0.2);
@@ -2120,7 +2387,6 @@ function spawnBullet(targetObs) {
     life: GAME_CFG.bulletLife, maxLife: GAME_CFG.bulletLife, trailTimer: 0,
   });
 }
-
 function updateBullets(dt, dtFactor) {
   for (let i = GAME.bullets.length - 1; i >= 0; i--) {
     const b = GAME.bullets[i];
@@ -2319,17 +2585,25 @@ function showComboPopup(text, color, pos3D) {
 
 function handleShoot(clientX, clientY) {
   if (!GAME.active || GAME.gameOver) return;
-  if (Date.now() - GAME.lastShotTime < GAME_CFG.shotCooldown) return;
+  const cd = isPwrActive('rapid') ? GAME_CFG.shotCooldown * 0.4 : GAME_CFG.shotCooldown;
+  if (Date.now() - GAME.lastShotTime < cd) return;
   GAME.lastShotTime = Date.now();
-  GAME.shotsFired++;
+  const triple = isPwrActive('triple');
+  GAME.shotsFired += triple ? 3 : 1;
   const rect = canvas.getBoundingClientRect();
   const canvasX = clientX - rect.left;
   const canvasY = clientY - rect.top;
   const targetObs = findRedTargetByRay(canvasX, canvasY);
   spawnMuzzleFlash();
-  spawnBullet(targetObs);
+  sfxShoot();
+  if (triple) {
+    spawnBullet(targetObs, 0);
+    spawnBullet(targetObs, -0.14);
+    spawnBullet(targetObs, 0.14);
+  } else {
+    spawnBullet(targetObs, 0);
+  }
 }
-
 function updateGameHUD() {
   if (mode !== 'freeflight') return;
   document.getElementById('gScore').textContent = Math.floor(GAME.score).toLocaleString();
@@ -2393,12 +2667,13 @@ async function runProgram() {
   if (!startBlock) { toast('⚠️ 找不到「▶ 當開始執行」', 'warn'); return; }
   resetAll();
   await sleep(300);
-  busy = true; stopRequested = false;
+  busy = true; stopRequested = false; crashed = false;
   document.getElementById('btnRun').disabled = true;
   document.getElementById('btnStop').disabled = false;
   try {
     await execChain(startBlock);
-    if (!stopRequested) { toast('✅ 程式執行完成', 'success'); setTimeout(() => checkLevelComplete(), 400); }
+    if (crashed) { toast('💥 無人機撞毀,本次任務失敗', 'error'); setTimeout(() => checkLevelComplete(), 400); }
+    else if (!stopRequested) { toast('✅ 程式執行完成', 'success'); setTimeout(() => checkLevelComplete(), 400); }
     else { toast('⏹ 程式被中止', 'warn'); }
   } catch(e) { toast('❌ 錯誤: ' + e.message, 'error'); console.error(e); }
   finally {
